@@ -60,6 +60,12 @@ function log_process(process){
 }
 let process = fork(__dirname+"/start_server")
 if(isFreshInstall){
+  let streamKeys = `STREAM_APP_ID
+STREAM_API_KEY
+STREAM_API_SECRET
+`
+  fs.appendFileSync('./.env',streamKeys)
+  // fs.truncateSync('./.env',0)
   update_server()
 }
 log_process(process)
