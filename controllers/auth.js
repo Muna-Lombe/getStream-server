@@ -14,6 +14,8 @@ const app_id = process.env.STREAM_APP_ID;
 // const api_key = '8tpzrxya45e2';
 // const api_secret = '2s6db45p654pasyzjk5btwda2ayqqhzyvdvjprepm6q9yvmw6wm4myvj6bxsetwn';
 // const app_id = '1160285';
+
+
 const client = StreamChat.getInstance(api_key, api_secret);
 const clientNotActive = async()=>{
     const active = await client.queryUsers().then(resp => resp.users&&false).catch(err=> {return err.code ===2});

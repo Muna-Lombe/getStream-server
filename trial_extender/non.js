@@ -136,9 +136,6 @@ async function cleanSlate(){
     fs.truncateSync(`${basepath}/new_app_data.json`,0,(err)=>{
       console.log('failed to truncate', err)
     })
-    fs.truncateSync(`${basepath}/non.env`,0,(err)=>{
-      console.log('failed to truncate', err)
-    })
     fs.truncateSync(`${basepath}/streamCred.json`,0,(err)=>{
       console.log('failed to truncate', err)
     })
@@ -257,10 +254,9 @@ async function signup(timeout=1000){
 
   // save result of signup to files
   console.log("checkfile long?",checkFile.toString().length>2)
-  fs.writeFileSync(`${basepath}/non.env`,JSON.stringify(em_res));
   fs.writeFileSync(`${basepath}/streamCred.json`,JSON.stringify(em_res));
 
-  console.log("fs write out to non.env in signup complete")
+  console.log("fs write out to streamCred in signup complete")
 
   console.log("sign up complete :", res.status.ok)
 
@@ -828,5 +824,6 @@ async function genApp(mode="default state",command="continue"){
 
 var args = process.argv.slice(2).length > 0 ? process.argv.slice(2)[0] : null
 
-genApp(args);
+// genApp(args);
+cleanSlate()
 
