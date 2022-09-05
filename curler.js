@@ -1,6 +1,7 @@
 var https = require('https');
 var zlib = require('zlib')
-let printres =(res,hed,stet) => {
+
+let save_result =(res,hed,stet) => {
   return {json:res,headers:hed, status:stet}
 }
 
@@ -29,7 +30,7 @@ let http_get =(url,resolve,reject) => {
           // console.log("jsoni",jsonBuffer.join());
           headers = JSON.stringify(resp.headers)
           status = {code: resp.statusCode, message: resp.statusMessage, ok: (resp.statusCode >= 200 && resp.statusCode <= 299)}
-          resolve(printres(jsonBuffer.join(), headers,status));
+          resolve(save_result(jsonBuffer.join(), headers,status));
         }).on('error', (er)=> {
           console.log('err', er, 'unzipped', jsonBuffer.join())
         });
@@ -42,7 +43,7 @@ let http_get =(url,resolve,reject) => {
           // console.log("jsoni",jsonBuffer.join());
           headers = JSON.stringify(resp.headers)
           status = {code: resp.statusCode, message: resp.statusMessage, ok: (resp.statusCode >= 200 && resp.statusCode <= 299)}
-          resolve(printres(jsonBuffer.join(), headers,status));
+          resolve(save_result(jsonBuffer.join(), headers,status));
         })
       }
       
@@ -64,7 +65,7 @@ let http_post = (req_data,req_opts,resolve, reject) => {
           headers = JSON.stringify(resp.headers)
           status = {code: resp.statusCode, message: resp.statusMessage, ok: (resp.statusCode >= 200 && resp.statusCode <= 299)}
           
-          reject(printres({name: "App with this name already exists."}, headers,status));
+          reject(save_result({name: "App with this name already exists."}, headers,status));
           
         }
 
@@ -81,7 +82,7 @@ let http_post = (req_data,req_opts,resolve, reject) => {
           // console.log("jsoni",jsonBuffer.join());
           headers = JSON.stringify(resp.headers)
           status = {code: resp.statusCode, message: resp.statusMessage, ok: (resp.statusCode >= 200 && resp.statusCode <= 299)}
-          resolve(printres(jsonBuffer.join(), headers,status));
+          resolve(save_result(jsonBuffer.join(), headers,status));
         }).on('error', (er)=> {
           console.log('err', er, 'unzipped', jsonBuffer.join())
         });
@@ -94,7 +95,7 @@ let http_post = (req_data,req_opts,resolve, reject) => {
           // console.log("jsoni",jsonBuffer.join());
           headers = JSON.stringify(resp.headers)
           status = {code: resp.statusCode, message: resp.statusMessage, ok: (resp.statusCode >= 200 && resp.statusCode <= 299)}
-          resolve(printres(jsonBuffer.join(), headers,status));
+          resolve(save_result(jsonBuffer.join(), headers,status));
         })
       }
       

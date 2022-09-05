@@ -1,57 +1,76 @@
-const { fork, exec, execFile, spawn } = require("child_process");
-const { restart } = require("nodemon");
+const express = require('express');
+const cors =  require('cors');
+const res = require('express/lib/response');
+
+//Requiring routes
+const authRoutes = require('./routes/auth.js')
+const inviteRoutes = require('./routes/invite.js')
+
+const app = express();
+
+const PORT = process.env.PORT || 5000;
+
+// TO MAKE CROSS-ORIGIN REQUESTS
+app.use(cors());
+// TO PASS JSON DATA
+app.use(express.json());
+// TO ENCODE THE URL
+app.use(express.urlencoded());
+
+// Creating routes://
+require('dotenv').config();
+
+//GET route
+app.get('/',(req, res) =>{
+    res.send('Hello, world!');
+});
+
+//POST route
+app.use('/auth', authRoutes);
+app.use('/invite', inviteRoutes)
 
 
-
-// SET UP TWO SERVERS, ONE INITIAL AND ANOTHER RESTARTED
-// START THE SERVER AS A CHILD PROCESS AND LISTEN FOR ERRORS
-
-function restart_server(process){
-  const initArgs = process.spawnargs[1]
-  return fork(initArgs)
+const server = {
+  start: function(){
+    return app.listen(PORT, (err, req, res, next) => {
+      console.log(`Server is running on port ${PORT}`)
+    }).on('error', (err)=>{
+        console.log('got something', err)
+    });
+  },
+  stop: async function(){
+    app.removeAllListeners()
+    process.send("SERVER STOPPED")
+    process.disconnect()
+    process.exit()
+  }
 }
 
-function log_process(process){
-  console.log("args",process.spawnargs)
-  process.stdio=[0,'pipe','pipe']
-  process.on('message', (message) => {
-    console.log('message', message)
-    if(message === "ExpiredStreamClientError"){
-      console.log("error:", message, ", disconnecting to reset...")
-      process.send('STOP')
+
+
+process.on('message', (message) => {
+  if (message == 'START') {
+    try {
+      console.log('Primary process received START message');
+      
+      server.start()
+      let message = `server started...`;
+      process.send(message);
+      process.on('unhandledRejection',(err)=>{
+        console.log('caught unhandled rejection in primary process', err)
+        if(err.name === "ExpiredStreamClientError"){
+          process.send(err.name)
+        }
+      })
+
+    } catch (error) {
+      console.log('logged error in primary process,', error)
+      process.send('ERROR')
     }
-    if(message === "SERVER STOPPED"){
-      console.log("message:", message, ", restarting...")
-      // process.send('START')
-      // process.kill(process.pid)
-    }
-  })
-
-
-  process.send('START');
-  process.on('disconnect', (err)=>{
-    console.log('updating cred with procfile...')
-    const secondary = fork(__dirname+"/run_procfile")
-    secondary.stdio=[0,'pipe','pipe']
-    secondary.on('message', (message)=>{
-      if(message === "ERROR"){
-        console.log("error, what should I do now?")
-        secondary.send("STOP")
-      }
-      if(message === "COMPLETE"){
-        console.log("completed update, can now restart process")
-        secondary.send("STOP")
-      }
-    }).on('disconnect', (msg)=>{
-      console.log('update complete, restarting server', msg)
-      // process = 
-      log_process(restart_server(process))
-    })
-    secondary.send('START')
-  })
-}
-let process = fork(__dirname+"/server1")
-
-log_process(process)
-
+  }
+  if(message === 'STOP'){
+    console.log('received STOP message from parent process, stopping server...')
+    server.stop()
+  }
+})
 

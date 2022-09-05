@@ -1,80 +1,58 @@
-const express = require('express');
-const cors =  require('cors');
-const res = require('express/lib/response');
-const { fork } = require('child_process');
-//Requiring routes
-const authRoutes = require('./routes/auth.js')
-const inviteRoutes = require('./routes/invite.js')
 
-const app = express();
-
-const PORT = process.env.PORT || 5000;
+const { fork, exec, execFile, spawn } = require("child_process");
 
 
 
 
-require('dotenv').config();
+// SET UP TWO SERVERS, ONE INITIAL AND ANOTHER RESTARTED
+// START THE SERVER AS A CHILD PROCESS AND LISTEN FOR ERRORS
 
-// TO MAKE CROSS-ORIGIN REQUESTS
-app.use(cors());
-// TO PASS JSON DATA
-app.use(express.json());
-// TO ENCODE THE URL
-app.use(express.urlencoded());
+function restart_server(process){
+  const initArgs = process.spawnargs[1]
+  return fork(initArgs)
+}
 
-// Creating routes://
-
-//GET route
-app.get('/',(req, res) =>{
-    res.send('Hello, world!');
-});
-
-//POST route
-app.use('/auth', authRoutes);
-app.use('/invite', inviteRoutes)
-// app.use((err, req, res) => {
-//     if (! err) {
-//         return next();
-//     }
-//     // const child = fork(__dirname + '/Procfile.sh');
-//     // child.stdio=[0,'pipe','pipe']
-//     // child.on('message', (message) => {
-//     //     if(message === 'ERROR'){
-//     //         console.log('child process broke');
-//     //         res.writeHead(200);
-//     //         res.end(message);
-//     //         child.send('STOP');
-//     //         console.log("talking to doctor....")
-//     //         process.exit(1)
-//     //     }
-//     // })
-//     console.log('there is a big error')
-//     res.status(500);
-//     res.send('500: Internal server error');
-// });
-//checking routes
-// console.log('app routes:',app._router)
-
-// Server status
-app.listen(PORT, (err, req, res, next) => {
-    console.log(`Server is running on port ${PORT}`)
-}).on('error', (err)=>{
-    console.log('got something', err)
-    if(err.name === "ExpiredStreamClientError"){
-        console.log("expired client detected")
-        // const child = fork(__dirname + '/Procfile.sh');
-//     // child.stdio=[0,'pipe','pipe']
-//     // child.on('message', (message) => {
-//     //     if(message === 'ERROR'){
-//     //         console.log('child process broke');
-//     //         res.writeHead(200);
-//     //         res.end(message);
-//     //         child.send('STOP');
-//     //         console.log("talking to doctor....")
-//     //         process.exit(1)
-//     //     }
-//     // })
-
+function log_process(process){
+  console.log("args",process.spawnargs)
+  process.stdio=[0,'pipe','pipe']
+  process.on('message', (message) => {
+    console.log('message', message)
+    if(message === "ExpiredStreamClientError"){
+      console.log("error:", message, ", disconnecting to reset...")
+      process.send('STOP')
     }
-});
+    if(message === "SERVER STOPPED"){
+      console.log("message:", message, ", restarting...")
+      // process.send('START')
+      // process.kill(process.pid)
+    }
+  })
+
+
+  process.send('START');
+  process.on('disconnect', (err)=>{
+    console.log('updating cred with procfile...')
+    const secondary = fork(__dirname+"/run_procfile")
+    secondary.stdio=[0,'pipe','pipe']
+    secondary.on('message', (message)=>{
+      if(message === "ERROR"){
+        console.log("error, what should I do now?")
+        secondary.send("STOP")
+      }
+      if(message === "COMPLETE"){
+        console.log("completed update, can now restart process")
+        secondary.send("STOP")
+      }
+    }).on('disconnect', (msg)=>{
+      console.log('update complete, restarting server', msg)
+      // process = 
+      log_process(restart_server(process))
+    })
+    secondary.send('START')
+  })
+}
+let process = fork(__dirname+"/start_server")
+
+log_process(process)
+
 

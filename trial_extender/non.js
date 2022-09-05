@@ -1,23 +1,18 @@
-var fs = require('fs');
-// const fetch  = require('node-fetch');
-// const fs = require("fs");
+const fs = require('fs');
 const os = require("os");
 
 
-
-// crude headers saver
 const { Console, error } = require("console");
 const https_request  = require('../curler');
 
-// var axios = require('axios').default;
 
 
-// global count
+// global count for login counter
 var logincount = 0;
 // global cred value
 var logincred = 0;
 
-// make a new logger
+// make a new logger, crude headers saver
 const headerCapture = new Console({
   stdout: fs.createWriteStream("stringHeaderResponse.txt"),
   // stderr: fs.createWriteStream("errStdErr.txt"),
@@ -32,31 +27,50 @@ try{
 } 
 basepath = process.cwd();
 
+
+/**
+ * Function to set update environment variables.
+ * Takes a key and a value and
+ * searches for the key in the existing '.env' file 
+ * and updates it value with the given value.
+ */
 function setEnvValue(key, value) {
 
-    // read file from hdd & split if from a linebreak to a array
-        const ENV_VARS = fs.readFileSync("../../server/.env", "utf8").split(os.EOL);
-        
-        console.log('EOL out', ENV_VARS)
-        // find the env we want based on the key
-        const target = ENV_VARS.indexOf(ENV_VARS.find((line) => {
-            return line.match(new RegExp(key));
-        }));
-        
-        console.log('target', target)
-        // replace the key/value with the new value
-        ENV_VARS.splice(target, 1, `${key}=${value}`);
+  // read file from hdd & split if from a linebreak to a array
+  const ENV_VARS = fs.readFileSync("../../server/.env", "utf8").split(os.EOL);
+  
+  // console.log('EOL out', ENV_VARS)
+  // find the env we want based on the key
+  const target = ENV_VARS.indexOf(ENV_VARS.find((line) => {
+      return line.match(new RegExp(key));
+  }));
+  
+  // console.log('target', target)
+  // replace the key/value with the new value
+  ENV_VARS.splice(target, 1, `${key}=${value}`);
 
-        console.log('fin env', ENV_VARS)
-        // write everything back to the file system
-        fs.writeFileSync("../../server/.env", ENV_VARS.join(os.EOL));
+  // console.log('fin env', ENV_VARS)
+  // write everything back to the file system
+  fs.writeFileSync("../../server/.env", ENV_VARS.join(os.EOL));
+  console.log('Env updated with', key, value)
+  
 
 }
 // filesystem handler
+/**
+ * Short hand to performing synchronous fs operations.
+ * 
+ * @param {string} type options: read, write
+ * @param {string} path path to file
+ * @param {string} file filename.withExtension
+ * @param {StringObject} data stringified data
+ * @param {Boolean} write_new 
+ * @param {Number} id 
+ * @returns void
+ */
 async function fs_do(type,path,file,data, write_new=false, id=0){
   
   if(type==="read"){
-    // if(!fs.readFileSync(`${path}/${file}`).toString()) return undefined;
     let data = fs.readFileSync(`${path}/${file}`).toString()
     return data;
   }
@@ -74,15 +88,19 @@ async function fs_do(type,path,file,data, write_new=false, id=0){
           console.log(key,":",data[key])
           setEnvValue(key, data[key])
         })
-        
-        // fs.writeFileSync(`../../server/.env`, data)
       }
-      
     }
   }
 }
 
-// procxy
+// proxy http request handler
+/**
+ * Proxy http request handler.
+ * Extends the time between requests to prevent server-side blocking of ip.
+ *  @prop lastRequest - saves the time since the last request
+ * @prop makeRequest - first calculates how long to wait before making the request. This is done using the time since the last request.
+ */
+
 const requester = {
     lastRequest: new Date(2000,0,1),
     makeRequest: async function (method, url,options) {
@@ -93,30 +111,19 @@ const requester = {
             this.lastRequest = new Date(this.lastRequest.getTime() + (1000 - timeSinceLast));
             await new Promise(resolve => setTimeout(resolve, 1000-timeSinceLast));
         }
-
-        // make request here and return result
-        // const response = await fetch(url,options)
-        //           .then(resp=> {return resp}, rej => console.log('failed:', rej))
-        //           .catch(err => {console.log(err)});
-        // console.log('request status:', response.status)
         let {json, headers, status} = await https_request(method,url,options)
-        
-        // let json;
-        // try {
-        //   json = await response.json();
-        // } catch (error) {
-        //   json = {detail: "no response body"}
-        // }
-        
-        // return {json,response};
         return {json, headers, status};
     }
 };
 
+//deletes contents of necessary files and folders to create a fresh setup
+/**
+ * When called, this function will synchronously go throw and truncate and delete files.
+ * This is necessary to create a clean slate for a fresh setup
+ * @returns {boolean}
+ */
 async function cleanSlate(){
   try {
-    
-  
     fs.readdirSync(`${basepath}/collected`).map((file)=> fs.unlinkSync(`${basepath}/collected/${file}`, (err)=> {
       console.log('failed to delete, file might not exist', err)
     }))
@@ -159,9 +166,15 @@ async function cleanSlate(){
 // singup
 console.log(basepath);
 
+/**
+ * When called, this function will create a new account with getStream.io using a temporary email api
+ * @param {Number} timeout 
+ * @returns 
+ */
 async function signup(timeout=1000){
   console.log("signing up...")
   
+  // fetch new temp email
   let url = "https://api.internal.temp-mail.io/api/v3/email/new";
   let eh = {
     "User-Agent": "PostmanRuntime/7.29.0",
@@ -181,15 +194,9 @@ async function signup(timeout=1000){
                // body data type must match "Content-Type" header
             
             }
-    let res = await requester.makeRequest('post-get', url, em_opts)        
-  // var res = await fetch(url,em_opts)
-  //                 .then(resp=> {return resp.json()}, rej => console.log('failed:', rej))
-  //                 .catch(err => {console.log(err)});
-  // var email = await res.email;
-  // var res = await requester.makeRequest(url,em_opts)
-  // var email = await res.json.email;
-  
-  console.log("temp email fetched", res.status.code)
+  let res = await requester.makeRequest('post-get', url, em_opts)        
+
+  console.log("temp email generated status:", res.status.code)
   if(res.status.code > 299){
     setTimeout(async() => {
       console.log('retrying signup')
@@ -198,19 +205,12 @@ async function signup(timeout=1000){
     return 0;
   }
   let email = await JSON.parse(res.json).email
-  console.log("email res", email);
+  console.log("temp email:", email);
 
+  // create signup credentials and signup
   let si = `email=${email.toString().replace('@','%40')}&username=${email.slice(0, 4)}&password=Aldebarandemoclese773&gotcha=&activate_chat_trial=true`;
-  // console.log(si)
-  /*{
-    email: email,
-    username: email.slice(0, 4),
-    password:"Aldebarandemoclese773",
-    gotcha: '',
-    activate_chat_trial:true
-  }*/;
 
-   let baseUrl = "https://getstream.io/api/accounts/signup/";
+  let baseUrl = "https://getstream.io/api/accounts/signup/";
   let host = "getstream.io"
   let urlpath = '/api/accounts/signup/'
   let gh = {
@@ -228,7 +228,6 @@ async function signup(timeout=1000){
 
   let opts = {
               host: host,
-              // authority: host,
               path: urlpath,
               scheme:'https',
               method: 'POST', // *GET, POST, PUT, DELETE, etc.
@@ -242,8 +241,9 @@ async function signup(timeout=1000){
   let em_res = await JSON.parse(si_res.json);
   console.log("sign up result",em_res);
 
- 
-  
+
+  // check if streamCred.json file exists 
+  // if not, create new file
   let checkFile;
   try {
     checkFile = fs.readFileSync(`${basepath}/streamCred.json`)
@@ -254,8 +254,8 @@ async function signup(timeout=1000){
     })
     checkFile = fs.readFileSync(`${basepath}/streamCred.json`)
   }
-  // checkFile = fs.readFileSync(`${basepath}/streamCred.json`)
-  // const arrFile = checkFile.toString().length < 2 ? [] : JSON.parse(checkFile.toString())
+
+  // save result of signup to files
   console.log("checkfile long?",checkFile.toString().length>2)
   fs.writeFileSync(`${basepath}/non.env`,JSON.stringify(em_res));
   fs.writeFileSync(`${basepath}/streamCred.json`,JSON.stringify(em_res));
@@ -266,16 +266,16 @@ async function signup(timeout=1000){
 
   return em_res;
 }
+
+// extracts cookies from raw string headers and saves them to file
+/**
+ * When called, this function will extract the csrf token and session id from a passed String
+ * if the string doe not have this, nothing is returned
+ * @param {String} header 
+ */
 function setCookies(header){
-    // String.prototype.nodeSafeReplaceAll = function(regex, replacement){
-    //     return 
-    // }
-    // String.nodeSafeReplaceAll()
-    
     let node_versions = process.versions
     let getActualVersionOf = (version_str) => {
-      
-      // let r = new RegExp()
       return Number.parseFloat(version_str)
     }
 
@@ -368,11 +368,6 @@ function setCookies(header){
           }
           console.log("final cookies", finalCookies)
           
-        
-
-          // return -1;
-          
-          // console.log("",finalCookies)
         fs.writeFileSync(`${basepath}/cleanedResponseHeader.json`,JSON.stringify(finalCookies))
         console.log("fs write out to CleandedRespHedr in LOGIN complete")
 
@@ -382,8 +377,14 @@ function setCookies(header){
     
     
   }
-// signup();
+
 // login
+/**
+ * When called, this function will login with the user credentials already stored
+ * or will call the signup function before proceeding.
+ * @param {Number} counter 
+ * @returns 
+ */
 async function login(counter = 0) {
   console.log("logging in..")
 
@@ -391,33 +392,34 @@ async function login(counter = 0) {
   // https://getstream.io/api/accounts/login/
   // username:Mutale
   // password:Aldebarandemoclese773
-  async function fetchCred(){
+
+  // gets the user credentials from the streamCred.json
+  async function fetchUserCred(){
     try{
       // await JSON.parse(fs.readFileSync(`${process.cwd()}/streamCred.json`).toString())
       let streamCred = await JSON.parse(fs.readFileSync(`${process.cwd()}/streamCred.json`).toString())
       
-      let {email, username} = streamCred; //JSON.parse(fs_do('read', basepath,'non.env')) //JSON.parse(fs.readFileSync(`${process.cwd()}/non.env`).toString());
+      let {email, username} = streamCred; 
       return {email, username} ;
     }catch(e){
-      console.log('fetchCred Error:', e)
+      console.log('fetchUserCred Error:', e)
       logincount += 1
       await signup();
-      // await login(logincount);
       let streamCred = await JSON.parse(fs.readFileSync(`${process.cwd()}/streamCred.json`).toString())
       
-      let {email, username} = streamCred; //JSON.parse(fs_do('read', basepath,'non.env')) //JSON.parse(fs.readFileSync(`${process.cwd()}/non.env`).toString());
+      let {email, username} = streamCred; 
       return {email, username} ;
     }
     
   }
 
 
-  
-  var {email, username} = await fetchCred();
-  console.log("fetched cred: ",email, username);
-  var li = `email=${email}&username=${username}&password=Aldebarandemoclese773&gotcha=&activate_chat_trial=true`;
-  var baseUrl = "https://getstream.io/api/accounts/login/";
-  var gh = {
+  // make post request to login
+  const {email, username} = await fetchUserCred();
+  console.log("fetched user cred: ",email, username);
+  const li = `email=${email}&username=${username}&password=Aldebarandemoclese773&gotcha=&activate_chat_trial=true`;
+  const baseUrl = "https://getstream.io/api/accounts/login/";
+  const gh = {
     "Origin": "https://getstream.io",
     "dnt":"1",
     "Referer": "https://getstream.io/accounts/login/",
@@ -432,7 +434,7 @@ async function login(counter = 0) {
   };
   
 
-  let gr_opts =  { 
+  const gr_opts =  { 
               host:"getstream.io",
               path:"/api/accounts/login/" ,
               method: 'POST', // *GET, POST, PUT, DELETE, etc.
@@ -442,13 +444,13 @@ async function login(counter = 0) {
               referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
               // body: li // body data type must match "Content-Type" header
             }
-  var lr = await requester.makeRequest("post",li,gr_opts)
+  const lr = await requester.makeRequest("post",li,gr_opts)
 
-  var em_res = await lr.json;
+  const em_res = await lr.json;
   console.log("login result:", em_res)
   console.log("stat:", lr.status.code)
   //////////////////////////////////////////////////////////////////
-  if(lr.status.code > 400){
+  if(lr.status.code >= 400){
     console.log("bad request"); /*signup() ;*/ 
     setTimeout(async() => {
       logincount += 1
@@ -458,11 +460,14 @@ async function login(counter = 0) {
     return 0;
   };
   
+  // save result to cleaned response headers file
   console.log("login headers", JSON.parse(lr.headers)['set-cookie'])
   let newCsrf = JSON.parse(lr.headers)['set-cookie'][0].split(';')[0]
   let newSessionid = JSON.parse(lr.headers)['set-cookie'][1].split(';')[0]
   fs.writeFileSync(`${basepath}/cleanedResponseHeader.json`, JSON.stringify({csrftoken: newCsrf.slice(newCsrf.indexOf('=')+1, newCsrf.length), sessionid: newSessionid.slice(newSessionid.indexOf('=')+1, newSessionid.length)}))
   return 1;
+
+  // LEGACY CODE DO NOT DELETE
   /////////////////////////////////////////////////////////////////
   // let res =  await lr.json;;
 
@@ -491,18 +496,29 @@ async function login(counter = 0) {
 
 // get user
 // create app from cred
+/**
+ * When called, this function creates an app under the saved user account. 
+ * For this function to operate normally, a csrfToken, sessionId and usertoken must exist.
+ * @param {Number} app_count 
+ * @returns 
+ */
 async function createApp(app_count=0){
   console.log("creating app...")
-  // await genApp();
+
+  // get tokens and user cred
   let {id, csrftoken, sessionid, user_token} = await JSON.parse(fs.readFileSync(`${process.cwd()}/cleanedResponseHeader.json`).toString()) // JSON.parse(JSON.stringify(fs_do('read',basepath,'cleanedResponseHeader.json')))
   let {username} = await JSON.parse(fs.readFileSync(`${process.cwd()}/streamCred.json`).toString())
   console.log("creapp", id, csrftoken, sessionid)
+
+  // if no tokens or credentials exist, generate them first
+  // if these conditions are true, this instance of the function will loop back to the genApp function and then exit with completing
   if(typeof id === undefined || typeof csrftoken === undefined || typeof sessionid === undefined || typeof user_token === undefined || typeof dnt === undefined){
     console.log("undefined id or user_token,\n retrying createApp")
     await genApp()
     return 0;
   };
-  //             https://getstream.io/api/dashboard/organization/1141868/app/
+
+  // set request properties and make request
   let baseurl = `https://getstream.io/api/dashboard/organization/${id}/app/`
   let cad = {
     name: `${username}_app${app_count}`, 
@@ -523,7 +539,7 @@ async function createApp(app_count=0){
   };
   
   let jcad = JSON.stringify(cad);
-            //  `chat_region=${cad.region}&development_mode=${cad.development_mode}&name=${cad.name}&region=${cad.region}&template_app=%20%22%22`
+            
   let scad = `chat_region=${cad.chat_region}&development_mode=${cad.development_mode}&name=${cad.name}&region=${cad.region}&template_app=%20%22%22`
   let cadh = {
     "Referer": "https://dashboard.getstream.io/",
@@ -540,9 +556,8 @@ async function createApp(app_count=0){
     "User-Token":`user_token=${user_token}; Path=/; Expires=Fri, 25 Aug 2023 12:54:07 GMT;`,
     "x-csrftoken": `${csrftoken}`,
     "dnt":"1"
-    
-  
   }
+
   let cadh_opts = { 
     // credentials : "include",
     host: "getstream.io",
@@ -558,6 +573,7 @@ async function createApp(app_count=0){
   var car = await requester.makeRequest('post',jcad,cadh_opts)
   let data = await car.json;
  
+  // reruns the function with a new app count incase an app with this name already exists 
   if(car.status.code === 400 || JSON.parse(data).name[0] === "App with this name already exists."){
     console.log("App with this name already exists \ncreating new app")
     createApp(app_count+1)
@@ -566,6 +582,7 @@ async function createApp(app_count=0){
   data = JSON.parse(data)
   data["setup_code_example"] = 0
 
+  // saves request result to new_app_data.json file
   fs_do('write',basepath,'new_app_data.json',JSON.stringify(data))
   let {res} = await getUser(csrftoken,sessionid)
   let apps = await extractUserDetails('appData', res).then(resp=>resp.apps)
@@ -591,6 +608,10 @@ async function createApp(app_count=0){
   fs_do('write_to_env',basepath,'.env',stream_env_cred)
   return 0;
 }
+/**
+ * Function simply checks if credentials are valid 
+ * @returns 
+ */
 async function getOptions(){
   console.log("fetching options...")
   let {id,csrftoken, sessionid,user_id,user_token} = fs.readFileSync(`${process.cwd()}/cleanedResponseHeader.json`).toString() ? await JSON.parse(fs.readFileSync(`${process.cwd()}/cleanedResponseHeader.json`).toString()) : {} // JSON.parse(JSON.stringify(fs_do('read',basepath,'cleanedResponseHeader.json'))) 
@@ -635,6 +656,15 @@ async function getOptions(){
     }
     return 0;
 }
+
+// gets user from passed tokens
+/**
+ * When called, this function will return user data from the credentials passed.
+ * The data returned includes app tokens and organization data.
+ * @param {string} csrftoken 
+ * @param {string} sessionid 
+ * @returns 
+ */
 async function getUser(csrftoken, sessionid){
   let baseurl = 'https://getstream.io/api/accounts/user/';
     // let basepath = process.cwd();
@@ -663,7 +693,13 @@ async function getUser(csrftoken, sessionid){
     let res = await JSON.parse(gr.json);
     return {res, gr}
 }
-
+// extracts user details from the data passed
+/**
+ * 
+ * @param {String} extract options: 'orgData','appData'  
+ * @param {Array} data 
+ * @returns 
+ */
 async function extractUserDetails(extract,data){
   if(extract === 'orgData'){
     let org = [
@@ -693,6 +729,8 @@ async function extractUserDetails(extract,data){
             secret: app.api_access[0].secret
 
           }
+          // creates an app.json file in the collected folder
+          // content is stringified object
           fs_do('write','','',JSON.stringify(obj),true, fidx-1)
           o_apps = [...o_apps, {['app'+fidx-1]: obj}]
         } 
@@ -707,7 +745,22 @@ async function extractUserDetails(extract,data){
   }
     
 }
-async function genApp(mode="current state",command="continue"){
+
+// main function of program, this will generate the app.
+/**
+ * This is the entry point of the program. 
+ * When called, this function will generate an app based on the credentials that already exist in select files.
+ * If no files exist, fallback functions will be called to signup and login before continuing.
+ * If either the mode is set to cleanSlate,
+ * the function will first will all user data and credentials before proceeding.
+ * This wil force a fresh setup to occur
+ * If the command is set to 'new cred', 
+ * the function will create new csrf token and session id.
+ * @param {string} mode options: cleanSlate, default state
+ * @param {string} command options: continue, new cred
+ * @returns 
+ */
+async function genApp(mode="default state",command="continue"){
   if(mode === "cleanSlate"){
     await cleanSlate();
   }
@@ -732,13 +785,11 @@ async function genApp(mode="current state",command="continue"){
     }
     
     let {res,gr} = await getUser(csrftoken,sessionid)
-    console.log("generate app req->res:", res)
+    // console.log("generate app req->res:", res)
     console.log("generated app: ",gr.status.ok)
     // return 0
     let [org_id,chat_trial_expired,app_id,user_token, user_id, appkey, appsec] = await extractUserDetails('orgData',res).then(resp=> resp.org)
-    
-    
-    
+
     if(chat_trial_expired.toString() === 'true') {
       console.log("chat trial expired, attempting with recent credentials!")
       await signup()
@@ -757,20 +808,15 @@ async function genApp(mode="current state",command="continue"){
                         +"appkey:"+appkey.toString()+"\n"
                         +"appsec:"+appsec.toString()+"\n"
     
-    // "+"\n"
-    //                     +"+"\n"
-    //                     +"STREAM_APP_SECRET = "+appsec.toString()+"\n"
-    
-    // return fs.writeFileSync(`${basepath}/streamData.txt`,JSON.stringify({id,appkey,appsec}))
+  
     fs_do('write',basepath,'streamData.txt',cookieString)
     
     fs_do('write',basepath,'streamData.json',JSON.stringify({org_id,user_id,user_token,appkey,appsec}))
-    // fs_do('write',basepath,'collectiveStreamData.json',JSON.stringify(apps))
+  
     fs_do('write',basepath,'cleanedResponseHeader.json',JSON.stringify({id:org_id,csrftoken,sessionid,user_id,user_token}))
     console.log("gen app creds", org_id, csrftoken, sessionid, cookieString)
     console.log("fs write out to streamData and cleandedRespHedr in genapp complete")
-    // fs.writeFileSync(`${basepath}/cleanedResponseHeader.json`,JSON.stringify(finalCookies))
-
+    
     console.log("get user complete, getting options")
     await getOptions()
     await createApp(1)
@@ -780,25 +826,7 @@ async function genApp(mode="current state",command="continue"){
   return 0;
 }
 
-function tester(str){
-  if(str){
-    console.log("str:", str)
-  }
-  if(!str){
-    console.log("no str")
-  }
-}
 var args = process.argv.slice(2).length > 0 ? process.argv.slice(2)[0] : null
-// signup()
-// login()
+
 genApp(args);
-// console.log(process.argv.slice(2))
-// tester(args)
-// getOptions()
-// createApp(31)
-// regex
-// (\[*[a-zA-Z0-9]*\(*[a-zA-Z0-9]*\s*[a-zA-Z0-9]*\)\])
-// codnitional looknehind
-// (?(?!\{)(\[*[a-zA-Z0-9]*\(*[a-zA-Z0-9]*\s*[a-zA-Z0-9]*\)\]:\s*[a-zA-Z0-9]*\(*[a-zA-Z0-9]*\s*[a-zA-Z0-9]*\))|(\,))
-// (?(([a-zA-Z0-9]*\s)(?=(\{))))
-// (\=\>)
+
