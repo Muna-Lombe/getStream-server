@@ -13,19 +13,19 @@ var logincount = 0;
 var logincred = 0;
 
 // make a new logger, crude headers saver
-const headerCapture = new Console({
-  stdout: fs.createWriteStream("stringHeaderResponse.txt"),
-  // stderr: fs.createWriteStream("errStdErr.txt"),
-});
+// const headerCapture = new Console({
+//   stdout: fs.createWriteStream("stringHeaderResponse.txt"),
+//   // stderr: fs.createWriteStream("errStdErr.txt"),
+// });
 
 var basepath ;
-try{
-  process.chdir('trial_extender')
-}catch(err){
-  console.error(err,"retrying with /server/trial_extender path")
-  process.chdir('server/trial_extender')
-} 
-basepath = process.cwd();
+// try{
+//   process.chdir('trial_extender')
+// }catch(err){
+//   console.error(err,"retrying with /server/trial_extender path")
+//   process.chdir('server/trial_extender')
+// } 
+basepath = process.cwd()+"/trial_extender";
 
 
 /**
@@ -37,21 +37,27 @@ basepath = process.cwd();
 function setEnvValue(key, value) {
 
   // read file from hdd & split if from a linebreak to a array
-  const ENV_VARS = fs.readFileSync("../../server/.env", "utf8").split(os.EOL);
+  const ENV_VARS = fs.readFileSync(process.cwd()+"/.env", "utf8").split(os.EOL);
   
-  // console.log('EOL out', ENV_VARS)
+  console.log('EOL out', ENV_VARS)
   // find the env we want based on the key
+  // throw new Error(`env_vars: ${ENV_VARS}`)
   const target = ENV_VARS.indexOf(ENV_VARS.find((line) => {
+    try {
       return line.match(new RegExp(key));
+    } catch (error) {
+      line=key
+    }
+      
   }));
   
-  // console.log('target', target)
+  console.log('target', target)
   // replace the key/value with the new value
   ENV_VARS.splice(target, 1, `${key}=${value}`);
 
   // console.log('fin env', ENV_VARS)
   // write everything back to the file system
-  fs.writeFileSync("../../server/.env", ENV_VARS.join(os.EOL));
+  fs.writeFileSync(process.cwd()+"/.env", ENV_VARS.join(os.EOL));
   console.log('Env updated with', key, value)
   
 
@@ -82,13 +88,12 @@ async function fs_do(type,path,file,data, write_new=false, id=0){
     return fs.writeFileSync(`${path}/${file}`,data);
   }
   if(type==="write_to_env"){
-    if(fs.existsSync('../.env')){
-      if(fs.existsSync('../../server/')){
-        Object.keys(data).map((key)=>{
-          console.log(key,":",data[key])
-          setEnvValue(key, data[key])
-        })
-      }
+    console.log("attempting to write to .env in",process.cwd())
+    if(fs.existsSync(process.cwd()+'/.env')){
+      Object.keys(data).map((key)=>{
+        console.log(key,":",data[key])
+        setEnvValue(key, data[key])
+      })
     }
   }
 }
@@ -145,9 +150,9 @@ async function cleanSlate(){
     fs.truncateSync(`${basepath}/streamData.txt`,0,(err)=>{
       console.log('failed to truncate', err)
     })
-    fs.truncateSync(`${basepath}/stringHeaderResponse.txt`,0,(err)=>{
-      console.log('failed to truncate', err)
-    })
+    // fs.truncateSync(`${basepath}/stringHeaderResponse.txt`,0,(err)=>{
+    //   console.log('failed to truncate', err)
+    // })
       console.log('cleaned all slates, can proceed for fresh setup')
       return true;
   } catch (error) {
@@ -392,8 +397,8 @@ async function login(counter = 0) {
   // gets the user credentials from the streamCred.json
   async function fetchUserCred(){
     try{
-      // await JSON.parse(fs.readFileSync(`${process.cwd()}/streamCred.json`).toString())
-      let streamCred = await JSON.parse(fs.readFileSync(`${process.cwd()}/streamCred.json`).toString())
+      // await JSON.parse(fs.readFileSync(`${basepath}/streamCred.json`).toString())
+      let streamCred = await JSON.parse(fs.readFileSync(`${basepath}/streamCred.json`).toString())
       
       let {email, username} = streamCred; 
       return {email, username} ;
@@ -401,7 +406,7 @@ async function login(counter = 0) {
       console.log('fetchUserCred Error:', e)
       logincount += 1
       await signup();
-      let streamCred = await JSON.parse(fs.readFileSync(`${process.cwd()}/streamCred.json`).toString())
+      let streamCred = await JSON.parse(fs.readFileSync(`${basepath}/streamCred.json`).toString())
       
       let {email, username} = streamCred; 
       return {email, username} ;
@@ -502,8 +507,8 @@ async function createApp(app_count=0){
   console.log("creating app...")
 
   // get tokens and user cred
-  let {id, csrftoken, sessionid, user_token} = await JSON.parse(fs.readFileSync(`${process.cwd()}/cleanedResponseHeader.json`).toString()) // JSON.parse(JSON.stringify(fs_do('read',basepath,'cleanedResponseHeader.json')))
-  let {username} = await JSON.parse(fs.readFileSync(`${process.cwd()}/streamCred.json`).toString())
+  let {id, csrftoken, sessionid, user_token} = await JSON.parse(fs.readFileSync(`${basepath}/cleanedResponseHeader.json`).toString()) // JSON.parse(JSON.stringify(fs_do('read',basepath,'cleanedResponseHeader.json')))
+  let {username} = await JSON.parse(fs.readFileSync(`${basepath}/streamCred.json`).toString())
   console.log("creapp", id, csrftoken, sessionid)
 
   // if no tokens or credentials exist, generate them first
@@ -588,7 +593,7 @@ async function createApp(app_count=0){
   
   let {appid, key, secret}={};
   try{
-    ({appid, key, secret}=await JSON.parse(fs.readFileSync(`${process.cwd()}/collected/${appname}.json`).toString()))
+    ({appid, key, secret}=await JSON.parse(fs.readFileSync(`${basepath}/collected/${appname}.json`).toString()))
   }catch(err){
     ({appid, key, secret}= app)
   }
@@ -610,7 +615,7 @@ async function createApp(app_count=0){
  */
 async function getOptions(){
   console.log("fetching options...")
-  let {id,csrftoken, sessionid,user_id,user_token} = fs.readFileSync(`${process.cwd()}/cleanedResponseHeader.json`).toString() ? await JSON.parse(fs.readFileSync(`${process.cwd()}/cleanedResponseHeader.json`).toString()) : {} // JSON.parse(JSON.stringify(fs_do('read',basepath,'cleanedResponseHeader.json'))) 
+  let {id,csrftoken, sessionid,user_id,user_token} = fs.readFileSync(`${basepath}/cleanedResponseHeader.json`).toString() ? await JSON.parse(fs.readFileSync(`${basepath}/cleanedResponseHeader.json`).toString()) : {} // JSON.parse(JSON.stringify(fs_do('read',basepath,'cleanedResponseHeader.json'))) 
   let baseurl = `https://getstream.io/api/dashboard/organization/${id}/app/`
   let newCleanedResponseHeaders = {
     id,
@@ -663,7 +668,7 @@ async function getOptions(){
  */
 async function getUser(csrftoken, sessionid){
   let baseurl = 'https://getstream.io/api/accounts/user/';
-    // let basepath = process.cwd();
+    // let basepath = basepath;
     let guh = {
       "Origin": "https://dashboard.getstream.io",
       "dnt":"1",
@@ -762,8 +767,8 @@ async function genApp(mode="default state",command="continue"){
   }
   console.log("generating app...")
   
-  let {id,csrftoken, sessionid,user_token} = fs.readFileSync(`${process.cwd()}/cleanedResponseHeader.json`).toString() ? await JSON.parse(fs.readFileSync(`${process.cwd()}/cleanedResponseHeader.json`).toString()) : {} // JSON.parse(JSON.stringify(fs_do('read',basepath,'cleanedResponseHeader.json'))) 
-  //JSON.parse(fs.readFileSync(`${process.cwd()}/cleanedResponseHeader.json`).toString())
+  let {id,csrftoken, sessionid,user_token} = fs.readFileSync(`${basepath}/cleanedResponseHeader.json`).toString() ? await JSON.parse(fs.readFileSync(`${basepath}/cleanedResponseHeader.json`).toString()) : {} // JSON.parse(JSON.stringify(fs_do('read',basepath,'cleanedResponseHeader.json'))) 
+  //JSON.parse(fs.readFileSync(`${basepath}/cleanedResponseHeader.json`).toString())
 
   console.log("no csrf_token: ",(typeof csrftoken) === 'undefined')
   if((typeof id) === 'undefined' || (typeof user_token) === 'undefined' || (typeof sessionid) === 'undefined' || (typeof csrftoken )=== 'undefined' || command === "new_cred"){
@@ -824,6 +829,6 @@ async function genApp(mode="default state",command="continue"){
 
 var args = process.argv.slice(2).length > 0 ? process.argv.slice(2)[0] : null
 
-// genApp(args);
-cleanSlate()
+genApp(args);
+// cleanSlate()
 

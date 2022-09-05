@@ -17,7 +17,7 @@ function grant_rights(){
 function exec_proc(){
   let complete = ""
   
- let proc =  execFileSync(__dirname + '/Procfile.sh',['cleanSlate'], (error, stdout, stderr) => {
+ let proc =  execFileSync(__dirname + '/Procfile.sh',['cleanSlate'],{}, (error, stdout, stderr) => {
         console.log("rights granted, executing file...")
 
         if (error) {

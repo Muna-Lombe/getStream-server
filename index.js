@@ -1,15 +1,39 @@
 
 const { fork, exec, execFile, spawn } = require("child_process");
-
+const fs = require('fs')
 
 
 
 // SET UP TWO SERVERS, ONE INITIAL AND ANOTHER RESTARTED
 // START THE SERVER AS A CHILD PROCESS AND LISTEN FOR ERRORS
+function isFreshInstall(){
+  // console.log("dirname",__dirname)
+  return !fs.existsSync(__dirname+'.env')
+}
 
 function restart_server(process){
   const initArgs = process.spawnargs[1]
   return fork(initArgs)
+}
+function update_server(processToRestart){
+  console.log('updating cred with procfile...')
+    const secondary = fork(__dirname+"/run_procfile")
+    secondary.stdio=[0,'pipe','pipe']
+    secondary.on('message', (message)=>{
+      if(message === "ERROR"){
+        console.log("error, what should I do now?")
+        secondary.send("STOP")
+      }
+      if(message === "COMPLETE"){
+        console.log("completed update, can now restart process")
+        secondary.send("STOP")
+      }
+    }).on('disconnect', (msg)=>{
+      console.log('update complete, restarting server', msg)
+      // process = 
+      processToRestart
+    })
+    secondary.send('START')
 }
 
 function log_process(process){
@@ -31,28 +55,13 @@ function log_process(process){
 
   process.send('START');
   process.on('disconnect', (err)=>{
-    console.log('updating cred with procfile...')
-    const secondary = fork(__dirname+"/run_procfile")
-    secondary.stdio=[0,'pipe','pipe']
-    secondary.on('message', (message)=>{
-      if(message === "ERROR"){
-        console.log("error, what should I do now?")
-        secondary.send("STOP")
-      }
-      if(message === "COMPLETE"){
-        console.log("completed update, can now restart process")
-        secondary.send("STOP")
-      }
-    }).on('disconnect', (msg)=>{
-      console.log('update complete, restarting server', msg)
-      // process = 
-      log_process(restart_server(process))
-    })
-    secondary.send('START')
+    update_server(log_process(restart_server(process)))
   })
 }
 let process = fork(__dirname+"/start_server")
-
+if(isFreshInstall){
+  update_server()
+}
 log_process(process)
 
 
