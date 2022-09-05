@@ -2,10 +2,7 @@
 
 # dependencies
 /node_modules
-/client/node_modules
-/server/node_modules
-/test.txt
-/server/child-processes
+/child-processes
 /.pnp
 .pnp.js
 
