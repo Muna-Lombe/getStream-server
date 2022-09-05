@@ -1,19 +1,5 @@
 #!/bin/bash
-# get_id="hello"
-# get_sec="hello 2"
 
- 
-# id=`jq -r  '.id' streamData.json` 
-# appkey=`jq -r '.appkey' streamData.json` 
-# appsec=`jq -r '.appsec' streamData.json` 
-# echo $json
-# # echo $json
-# echo $id
-# echo $appkey
-# echo $appsec
-
-# get_id="banaa"
-# echo "$get_id, $get_sec"
 
 nonArgs=$1||"no args"
 echo "first arg $nonArgs"
@@ -108,13 +94,7 @@ createApp(){
   access-key: $appkey\\
   access-secret-key: $appsec\\
   chat-url: https://chat.stream-io-api.com"
-        # printf '$i\n%s\n.\nw\n' "$newApp" | ed -s ~/.config/stream-cli/config.yml
         sed -i "`wc -l < ~/.config/stream-cli/config.yml` i$newApp " ~/.config/stream-cli/config.yml
-        # echo "apps:\n- name: $name\n  access-key: $appkey\n  access-secret-key: $appsec\n  chat-url: https://chat.stream-io-api.com\n  default: app$id" >> ~/.config/stream-cli/config.yml
-
-        # echo "- name: $name\n  access-key: $appkey\n  access-secret-key: $appsec\n  chat-url: https://chat.stream-io-api.com\n" >> ~/.config/stream-cli/config.yml
-        
-        # sed -i '/default/a %s'  "$newApp" ~/.config/stream-cli/config.yml
     done; 
     echo $lastId
     grep -F "default: app" ~/.config/stream-cli/config.yml 
@@ -131,6 +111,11 @@ createApp(){
 }
 
 bootStrapCli(){
+    envCount=$(ls -1q ./.env* | wc -l)
+    if [ $envCount -lt 1 ]
+    then
+        touch .env
+    fi
     if command -v stream-cli
     then
         echo "stream-cli exists!"
