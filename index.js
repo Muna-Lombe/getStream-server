@@ -59,7 +59,7 @@ function log_process(process){
   })
 }
 let process = fork(__dirname+"/start_server")
-if(isFreshInstall){
+if(isFreshInstall()){
   let streamKeys = `STREAM_APP_ID
 STREAM_API_KEY
 STREAM_API_SECRET

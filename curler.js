@@ -62,11 +62,12 @@ let http_post = (req_data,req_opts,resolve, reject) => {
   let req = https.request(req_opts,(resp) => {
       // catch response error
       if (resp.statusCode < 200 || resp.statusCode > 299) {
+          console.error("rejected request", resp.statusMessage)
           headers = JSON.stringify(resp.headers)
           status = {code: resp.statusCode, message: resp.statusMessage, ok: (resp.statusCode >= 200 && resp.statusCode <= 299)}
           
           reject(save_result({name: "App with this name already exists."}, headers,status));
-          
+          // throw new Error(`"rejected request", ${resp.statusMessage}`)
         }
 
       // A chunk of data has been received.
