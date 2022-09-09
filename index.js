@@ -7,8 +7,8 @@ const fs = require('fs')
 // SET UP TWO SERVERS, ONE INITIAL AND ANOTHER RESTARTED
 // START THE SERVER AS A CHILD PROCESS AND LISTEN FOR ERRORS
 function isFreshInstall(){
-  // console.log("dirname",__dirname)
-  return !fs.existsSync(__dirname+'.env')
+  console.log("is fresh install", !fs.existsSync(__dirname+'.env') && !fs.existsSync(process.cwd()+'.env'))
+  return (!fs.existsSync(__dirname+'.env') && !fs.existsSync(process.cwd()+'.env'))
 }
 
 function restart_server(process){
@@ -58,7 +58,8 @@ function log_process(process){
     update_server(log_process(restart_server(process)))
   })
 }
-let process = fork(__dirname+"/start_server")
+let childProcess = fork(__dirname+"/start_server")
+
 if(isFreshInstall()){
   let streamKeys = `STREAM_APP_ID
 STREAM_API_KEY
@@ -68,6 +69,6 @@ STREAM_API_SECRET
   // fs.truncateSync('./.env',0)
   update_server()
 }
-log_process(process)
+log_process(childProcess)
 
 

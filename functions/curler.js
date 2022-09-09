@@ -70,9 +70,9 @@ const http_post = (req_data, req_opts, resolve, reject) => {
       console.error("rejected request", resp.statusMessage);
       headers = JSON.stringify(resp.headers);
       status = {code: resp.statusCode, message: resp.statusMessage, ok: (resp.statusCode >= 200 && resp.statusCode <= 299)};
-      fs.appendFileSync("./errFile.txt", JSON.stringify({msg: resp.statusMessage, url: req_opts, hdr: resp.headers}));
+      fs.appendFileSync("./errFile.txt", JSON.stringify({msg: resp.statusMessage, opts: req_opts, body: req_data}));
       reject(save_result({name: "App with this name already exists."}, headers, status));
-      throw new Error(`"rejected request", ${resp.statusMessage}`);
+      // throw new Error(`"rejected request", ${resp.statusMessage}`);
     }
 
     // A chunk of data has been received.
