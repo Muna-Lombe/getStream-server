@@ -64,7 +64,7 @@ let http_post = (req_data,req_opts,resolve, reject) => {
       if (resp.statusCode < 200 || resp.statusCode > 299) {
           headers = JSON.stringify(resp.headers)
           status = {code: resp.statusCode, message: resp.statusMessage, ok: (resp.statusCode >= 200 && resp.statusCode <= 299)}
-          
+          console.error("msg", resp.statusCode, resp.statusMessage)
           reject(save_result({name: "App with this name already exists."}, headers,status));
           
         }
