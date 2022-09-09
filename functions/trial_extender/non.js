@@ -210,6 +210,8 @@ async function signup(timeout=1000) {
     return 0;
   }
   const email = await JSON.parse(res.json).email;
+  let temp_email = email.split('@')
+  email = temp_email[0]+"@bundy.com"
   console.log("temp email:", email);
 
   // create signup credentials and signup
