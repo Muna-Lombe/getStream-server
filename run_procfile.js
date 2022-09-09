@@ -17,22 +17,22 @@ function grant_rights(){
 function exec_proc(){
   let complete = ""
   
- let proc =  execFileSync(__dirname + '/Procfile.sh',['cleanSlate'],{}, (error, stdout, stderr) => {
-        console.log("rights granted, executing file...")
+  let proc =  execFileSync(__dirname + '/Procfile.sh',['cleanSlate'],{}, (error, stdout, stderr) => {
+    console.log("rights granted, executing file...")
 
-        if (error) {
-          console.error(`error: ${error.message}`);
-          return;
-        }
-
-        if (stderr) {
-          console.error(`stderr: ${stderr}`);
-          return;
-        }
-        console.log(`stdout:\n${stdout}`);
-      })
-      return "complete"
+    if (error) {
+      console.error(`error: ${error.message}`);
+      return;
     }
+
+    if (stderr) {
+      console.error(`stderr: ${stderr}`);
+      return;
+    }
+    console.log(`stdout:\n${stdout}`);
+  })
+  return "complete"
+}
 
 process.stdio=[0,'pipe','pipe']
 process.on('message', (message) => {
@@ -48,7 +48,7 @@ process.on('message', (message) => {
       process.on('unhandledRejection',(err)=>{
         console.log('caught unhandled rejection in secondary process', err)
         if(err.name === "ExpiredStreamClientError"){
-          process.send('ERROR')
+          process.send(err.name)
         }
         process.send('ERROR')
       })

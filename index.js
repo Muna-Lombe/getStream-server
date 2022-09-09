@@ -16,7 +16,7 @@ function restart_server(process){
   return fork(initArgs)
 }
 function update_server(processToRestart){
-  console.log('updating cred with procfile...')
+  console.log('starting update cred with procfile...')
     const secondary = fork(__dirname+"/run_procfile")
     secondary.stdio=[0,'pipe','pipe']
     secondary.on('message', (message)=>{
@@ -46,7 +46,7 @@ function log_process(process){
       process.send('STOP')
     }
     if(message === "SERVER STOPPED"){
-      console.log("message:", message, ", restarting...")
+      console.log("message:", message, ", waiting to restart...")
       // process.send('START')
       // process.kill(process.pid)
     }
@@ -55,14 +55,15 @@ function log_process(process){
 
   process.send('START');
   process.on('disconnect', (err)=>{
+    console.log("server disconnected, starting update process...")
     update_server(log_process(restart_server(process)))
   })
 }
 let childProcess = fork(__dirname+"/start_server")
 if(isFreshInstall()){
-  let streamKeys = `STREAM_APP_ID
-STREAM_API_KEY
-STREAM_API_SECRET
+  let streamKeys = `STREAM_APP_ID=1160285
+STREAM_API_KEY=8tpzrxya45e2
+STREAM_API_SECRET=2s6db45p654pasyzjk5btwda2ayqqhzyvdvjprepm6q9yvmw6wm4myvj6bxsetwn
 `
   fs.appendFileSync('./.env',streamKeys)
   // fs.truncateSync('./.env',0)

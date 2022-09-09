@@ -55,18 +55,24 @@ let http_get =(url,resolve,reject) => {
 } 
 let http_post = (req_data,req_opts,resolve, reject) => {
   let jsonBuffer = [] ;
-  let headers= ''
-  let status = ''
+  let errBuffer = [];
+  let headers= '';
+  let status = '';
 
   // ClientRequest.
   let req = https.request(req_opts,(resp) => {
       // catch response error
       if (resp.statusCode < 200 || resp.statusCode > 299) {
-          headers = JSON.stringify(resp.headers)
-          status = {code: resp.statusCode, message: resp.statusMessage, ok: (resp.statusCode >= 200 && resp.statusCode <= 299)}
-          console.error("msg", resp.statusCode, resp.statusMessage)
-          reject(save_result({name: "App with this name already exists."}, headers,status));
-          
+          resp.on('data', (chunk) => {
+            errBuffer.push(chunk.toString());
+          }).on('end', (data)=>{
+            console.error("data", errBuffer.join())
+            headers = JSON.stringify(resp.headers)
+            status = {code: resp.statusCode, message: resp.statusMessage, ok: (resp.statusCode >= 200 && resp.statusCode <= 299)}
+            console.error("msg", resp.statusCode, resp.statusMessage, req_data, req_opts)
+            reject(save_result(errBuffer.join(), headers,status));
+            throw new Error()
+          })
         }
 
       // A chunk of data has been received.
