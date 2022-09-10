@@ -42,6 +42,7 @@ default: dev"
 
 createApp(){
     echo "creating app..."
+    pwd
     c=$(ls -1q ./trial_extender/collected* | wc -l)
     lastId=0
     if [ $size -gt 1 ]
@@ -54,7 +55,7 @@ createApp(){
         then
             # command node
             echo "no apps found, creating apps"
-            command node trial_extender/non.js $nonArgs
+            command node ./trial_extender/non.js $nonArgs
             c=$(ls -1q ./trial_extender/collected* | wc -l)
             # createApp
     fi
@@ -90,7 +91,7 @@ createApp(){
                 name="app$id"
                 # id=`jq -r  '.id' ./trial_extender/collected/app$i.json`
                 appkey=`jq -r '.key' ./trial_extender/collected/app$id.json` 
-                appsec=`jq -r '.secret' ./trial_extender/collected/app$id.json`
+                appsec=`jq -r '.secret' ./functions/trial_extender/collected/app$id.json`
         fi
         newApp="- name: $name\\
   access-key: $appkey\\
@@ -106,14 +107,17 @@ createApp(){
         # printf '$i\ndefault: %s\n.\nw\n' "$id" | ed -s ~/.config/stream-cli/config.yml
     echo "config file updated, creating channel...";
     userId=`jq -r '.user_id' ./trial_extender/collected/app$lastId.json`
-    echo "userid: $userId"
+    echo "adding user with userid: $userId"
+    echo `stream-cli chat upsert-user --properties "{\"id\":\"$userId\"}"`
     channelId="teamChat"
     checkChannel=`stream-cli chat get-channel --id $channelId --type messaging`
     if [ `jq -r '.id' <<< "$checkChannel"` ]; 
         then 
             echo "Channel Exists"; 
         else 
-            echo `stream-cli chat create-channel --type messaging --id $channleId --user $userId`; 
+            echo "No channel found, creating channel..."
+
+            echo `stream-cli chat create-channel --type messaging --id $channelId --user $userId`; 
     fi
     echo "current channels"
     stream-cli chat list-channels --type messaging

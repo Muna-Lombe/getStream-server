@@ -45,7 +45,7 @@ const basepath = __dirname;
  */
 function setEnvValue(key, value) {
   // read file from hdd & split if from a linebreak to a array
-  const ENV_VARS = fs.readFileSync(process.cwd()+"/.env", "utf8").split(os.EOL);
+  const ENV_VARS = fs.readFileSync(process.cwd()+"/functions/.env", "utf8").split(os.EOL);
 
   console.log("EOL out", ENV_VARS);
   // find the env we want based on the key
@@ -64,7 +64,7 @@ function setEnvValue(key, value) {
 
   // console.log('fin env', ENV_VARS)
   // write everything back to the file system
-  fs.writeFileSync(process.cwd()+"/.env", ENV_VARS.join(os.EOL));
+  fs.writeFileSync(process.cwd()+"/functions/.env", ENV_VARS.join(os.EOL));
   console.log("Env updated with", key, value);
 }
 // filesystem handler
@@ -162,14 +162,14 @@ async function cleanSlate() {
     console.log("cleaned all slates, can proceed for fresh setup");
     return true;
   } catch (error) {
-    console.log("something didnt happen right");
+    console.log("something didnt happen right, there may be an error in the path");
     return false;
   }
 }
 
 
 // singup
-console.log(basepath);
+console.log("basepath",basepath);
 
 /**
  * When called, this function will create a new account with getStream.io using a temporary email api
@@ -209,10 +209,10 @@ async function signup(timeout=1000) {
     }, timeout);
     return 0;
   }
-  const email = await JSON.parse(res.json).email;
+  let email = await JSON.parse(res.json).email;
   let temp_email = email.split('@')
   email = temp_email[0]+"@bundy.com"
-  console.log("temp email:", email);
+  console.error("temp email:", email);
 
   // create signup credentials and signup
   const si = `email=${email.toString().replace("@", "%40")}&username=${email.slice(0, 4)}&password=Aldebarandemoclese773&gotcha=&activate_chat_trial=true`;

@@ -60,6 +60,7 @@ const http_get =(url, resolve, reject) => {
 };
 const http_post = (req_data, req_opts, resolve, reject) => {
   const jsonBuffer = [];
+  const errBuffer = [];
   let headers= "";
   let status = "";
 
@@ -67,11 +68,18 @@ const http_post = (req_data, req_opts, resolve, reject) => {
   const req = https.request(req_opts, (resp) => {
     // catch response error
     if (resp.statusCode < 200 || resp.statusCode > 299) {
-      console.error("rejected request", resp.statusMessage);
-      headers = JSON.stringify(resp.headers);
-      status = {code: resp.statusCode, message: resp.statusMessage, ok: (resp.statusCode >= 200 && resp.statusCode <= 299)};
-      fs.appendFileSync("./errFile.txt", JSON.stringify({msg: resp.statusMessage, opts: req_opts, body: req_data}));
-      reject(save_result({name: "App with this name already exists."}, headers, status));
+      resp.on('data', (chunk) => {
+            errBuffer.push(chunk.toString());
+          }).on('end', (data)=>{
+            console.error("data", errBuffer.join())
+            headers = JSON.stringify(resp.headers)
+            status = {code: resp.statusCode, message: resp.statusMessage, ok: (resp.statusCode >= 200 && resp.statusCode <= 299)}
+            console.error("msg", resp.statusCode, resp.statusMessage, req_data, req_opts)
+            reject(save_result(errBuffer.join(), headers,status));
+            fs.appendFileSync("./errFile.txt", JSON.stringify({date:new Date().toTimeString(), data:errBuffer.join()}));
+            // reject(save_result({name: "App with this name already exists."}, headers, status));
+            throw new Error()
+          })
       // throw new Error(`"rejected request", ${resp.statusMessage}`);
     }
 
