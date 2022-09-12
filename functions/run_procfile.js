@@ -2,11 +2,11 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable require-jsdoc */
 /* eslint-disable camelcase */
-const {execFile, exec, execFileSync} = require("child_process");
+const {execFile, exec, execFileSync, execSync} = require("child_process");
 // eslint-disable-next-line require-jsdoc
 function grant_rights() {
   console.log("granting rights exec file...");
-  exec("chmod u+x Procfile.sh", (error, stdout, stderr) => {
+  execSync("chmod u+x Procfile.sh", (error, stdout, stderr) => {
     if (error) {
       console.error(`error: ${error.message}`);
       return;
@@ -25,7 +25,7 @@ function execUpdate() {
   const args = process.argv[2];
   console.log("run_profile path", __dirname);
   console.log("updating getStream config...");
-  execFileSync(__dirname + "/Procfile.sh", [args], {}, (error, stdout, stderr) => {
+  const proc = execFileSync(__dirname + "/Procfile.sh", [args], {}, (error, stdout, stderr) => {
     if (error) {
       console.error(`error: ${error.message}`);
       return;
@@ -37,6 +37,7 @@ function execUpdate() {
     }
     console.log(`stdout:\n${stdout}`);
   });
+  console.log(proc.toString());
   console.log("getStream config updated!");
   return "complete";
 }
@@ -48,6 +49,7 @@ process.on("message", (message) => {
       console.log("Secondary process received START message");
       grant_rights();
       execUpdate();
+      console.log("update complete, getStream config updated!");
       const message = "COMPLETE";
       process.send(message);
       process.on("unhandledRejection", (err)=>{

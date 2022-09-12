@@ -57,7 +57,7 @@ async function startUpdateProcessWith(child_process) {
   child_process.on("message", (message) => {
     console.log("message", message);
     if ( message === "COMPLETE" ) {
-      console.log("update complete, return to server process...");
+      console.log("return to server process...");
       child_process.send("STOP");
     }
     if (message === "ExpiredStreamClientError") {
@@ -81,9 +81,7 @@ const signup = async (req, res) =>{
       const expiredClient = new Error("Client is expired!");
       expiredClient.name = "ExpiredStreamClientError";
       //   res.status(500).json({message: expiredClient.name});
-      console.log("Starting config update...");
-      startUpdateProcessWith(fork(process.cwd()+"/run_procfile"));
-      // throw expiredClient;
+      throw expiredClient;
     }
     const {fullName, username, password, phoneNumber} = req.body;
 
@@ -104,7 +102,9 @@ const signup = async (req, res) =>{
     res.status(200).json({token, fullName, username, userId, hashedPassword, phoneNumber});
   } catch (error) {
     console.log(error);
-    res.status(500).json({message: error});
+    console.log("Starting config update...");
+    res.status(500).json({message: "Looks like something is wrong on our side, please try again..."});
+    await startUpdateProcessWith(fork(process.cwd()+"/run_procfile", ["cleanSlate"]));
   }
 };
 
@@ -116,8 +116,9 @@ const login = async (req, res) =>{
       expiredClient.name = "ExpiredStreamClientError";
       //   res.status(500).json({message: expiredClient.name});
       console.log("Starting config update...");
-      startUpdateProcessWith(fork(process.cwd()+"/run_procfile", ["cleanSlate"]));
-      // throw expiredClient;
+      // res.status(500).json({message: "Looks like something is wrong on our side, please try again..."});
+      // await startUpdateProcessWith(fork(process.cwd()+"/run_procfile", ["cleanSlate"]));
+      throw expiredClient;
     }
 
     const {username, password} = req.body;
@@ -142,11 +143,13 @@ const login = async (req, res) =>{
       res.status(200).json({token, fullName: getUsers[0].fullName, username: username, userId: getUsers[0].id, permissions: permissions || "no-perms", grants: grants});
     } else {
       console.log("res: ", res);
-      res.status(500).json({message: "Incorrect Username or Password"});
+      res.status(400).json({message: "Incorrect Username or Password"});
     }
   } catch (error) {
-    res.status(500).json({message: error});
-    throw error;
+    res.status(500).json({message: "Looks like something is wrong on our side, please try again..."});
+    await startUpdateProcessWith(fork(process.cwd()+"/run_procfile", ["cleanSlate"]));
+    // res.status(500).json({message: error});
+    // throw error;
     // res.send('error')
   }
 };
