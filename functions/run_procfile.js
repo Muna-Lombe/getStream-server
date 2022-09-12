@@ -21,11 +21,11 @@ function grant_rights() {
   });
   console.log("rights granted, executing file...");
 }
-function execUpdate() {
+async function execUpdate() {
   const args = process.argv[2];
   console.log("run_profile path", __dirname);
   console.log("updating getStream config...");
-  const proc = execFileSync(__dirname + "/Procfile.sh", [args], {}, (error, stdout, stderr) => {
+  const proc = execFile(__dirname + "/Procfile.sh", [args], (error, stdout, stderr) => {
     if (error) {
       console.error(`error: ${error.message}`);
       return;
@@ -37,21 +37,56 @@ function execUpdate() {
     }
     console.log(`stdout:\n${stdout}`);
   });
-  console.log(proc.toString());
-  console.log("getStream config updated!");
-  return "complete";
+  proc.stdio = [0, "pipe", "pipe"];
+  proc.stdout.on("data", (data)=>{
+    console.log("received data", data);
+  });
+  proc.stdout.on("error", (data)=>{
+    console.log("received error", data);
+  });
+  proc.stdout.on("close", (data)=>{
+    console.log("received close", data);
+  });
+  proc.stdout.on("pause", (data)=>{
+    console.log("received pause", data);
+  });
+  proc.stderr.on("data", (data)=>{
+    console.log("received data", data);
+  });
+  proc.stderr.on("error", (data)=>{
+    console.log("received error", data);
+  });
+  proc.on("message", (msg)=>{
+    console.log("received msg", msg);
+  });
+  proc.on("error", (msg)=>{
+    console.log("received msg", msg);
+  });
+  proc.on("close", (msg)=>{
+    console.log("received msg", msg);
+  });
+  proc.on("disconnect", (msg)=>{
+    console.log("getStream config updated!");
+    return "complete";
+  });
 }
 
 process.stdio=[0, "pipe", "pipe"];
-process.on("message", (message) => {
+process.on("message", async (message) => {
   if (message == "START") {
     try {
       console.log("Secondary process received START message");
       grant_rights();
-      execUpdate();
-      console.log("update complete, getStream config updated!");
-      const message = "COMPLETE";
-      process.send(message);
+      await execUpdate().then((result)=>{
+        console.log("received result", result);
+        if (result === "complete") {
+          console.log("update complete, getStream config updated!");
+          const message = "COMPLETE";
+          process.send(message);
+        }
+      }).catch((err)=>{
+        console.log("error happend in", err);
+      });
       process.on("unhandledRejection", (err)=>{
         console.log("caught unhandled rejection in secondary process", err);
         if (err.name === "ExpiredStreamClientError") {

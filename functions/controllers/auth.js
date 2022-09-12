@@ -42,8 +42,8 @@ const app_id = process.env.STREAM_APP_ID;
 const client = StreamChat.getInstance(api_key, api_secret);
 
 const clientNotActive = async ()=>{
-  const active = await client.queryUsers().then((resp) => resp.users&&false).catch((err)=> {
-    console.log("err:", err.code);
+  const active = await client.queryUsers({}).then((resp) => resp.users&&false).catch((err)=> {
+    console.log("err:", err.code, err.message);
     return err.code ===2;
   });
   console.log("expired client?", active);
@@ -51,7 +51,8 @@ const clientNotActive = async ()=>{
 };
 
 
-async function startUpdateProcessWith(child_process) {
+async function startUpdateProcessWith(args) {
+  const child_process=fork(process.cwd()+"/run_procfile", (args && [args]));
   console.log("args", child_process.spawnargs);
   child_process.stdio=[0, "pipe", "pipe"];
   child_process.on("message", (message) => {
@@ -77,7 +78,9 @@ async function startUpdateProcessWith(child_process) {
 const signup = async (req, res) =>{
   console.log("signing up");
   try {
-    if (await clientNotActive()) {
+    const clientExpired = await clientNotActive();
+    if (clientExpired) {
+      console.log("client expr", clientExpired);
       const expiredClient = new Error("Client is expired!");
       expiredClient.name = "ExpiredStreamClientError";
       //   res.status(500).json({message: expiredClient.name});
@@ -98,26 +101,28 @@ const signup = async (req, res) =>{
     // const checkUsers = await client.queryUsers({name: username}).then(resp => resp.users).catch(err=> {return {code: err.code, message:err.message}});
     // console.log("users", checkUsers)
     // if(!checkUsers.users) return res.status(500).json({message: getUsers})
-
+    const user = await serverClient.user(username).getOrCreate({fullName, username, gender: "binary", occupation: "Xenomorph"});
     res.status(200).json({token, fullName, username, userId, hashedPassword, phoneNumber});
   } catch (error) {
     console.log(error);
     console.log("Starting config update...");
     res.status(500).json({message: "Looks like something is wrong on our side, please try again..."});
-    await startUpdateProcessWith(fork(process.cwd()+"/run_procfile", ["cleanSlate"]));
+    await startUpdateProcessWith("cleanSlate");
   }
 };
 
 
 const login = async (req, res) =>{
   try {
-    if (await clientNotActive()) {
+    const clientExpired = await clientNotActive();
+    if (clientExpired) {
+      console.log("client expr", clientExpired);
       const expiredClient = new Error("Client is expired!");
       expiredClient.name = "ExpiredStreamClientError";
       //   res.status(500).json({message: expiredClient.name});
       console.log("Starting config update...");
       // res.status(500).json({message: "Looks like something is wrong on our side, please try again..."});
-      // await startUpdateProcessWith(fork(process.cwd()+"/run_procfile", ["cleanSlate"]));
+      // await startUpdateProcessWith();
       throw expiredClient;
     }
 
@@ -128,11 +133,12 @@ const login = async (req, res) =>{
     // const client = StreamChat.getInstance(api_key, api_secret);
 
     const getUsers = await client.queryUsers({name: username}).then((resp) => resp.users).catch((err)=> {
-      return {code: err.code, message: err.message};
+      return {errCode: err.code, message: err.message};
     });
-    if (!getUsers.length) return res.status(400).json({message: "User not found!"});
+    console.log("get users", getUsers);
+    if (getUsers.errCode || getUsers.length < 1) return res.status(400).json({message: "User not found!"});
 
-    const success = await bcrypt.compare(password, getUsers[0].hashedPassword);
+    const success = await bcrypt.compare(password, getUsers[0].hashedPassword).then((result)=> true).catch((err)=> false);
 
     const token = serverClient.createUserToken(getUsers[0].id);
 
@@ -146,8 +152,9 @@ const login = async (req, res) =>{
       res.status(400).json({message: "Incorrect Username or Password"});
     }
   } catch (error) {
+    console.log("error with stream-client", error);
     res.status(500).json({message: "Looks like something is wrong on our side, please try again..."});
-    await startUpdateProcessWith(fork(process.cwd()+"/run_procfile", ["cleanSlate"]));
+    await startUpdateProcessWith("cleanSlate");
     // res.status(500).json({message: error});
     // throw error;
     // res.send('error')
@@ -170,4 +177,9 @@ const fetchauthor =async (req, res)=>{
   return res.status(200).json({hash: encrypt(hash, cryptyd, pivot)});
 };
 
-module.exports = {signup, login, fetchauthor};
+const test = async (req, res) =>{
+  setTimeout(() => {
+    res.status(200).json({token: "TKO"});
+  }, 3000);
+};
+module.exports = {signup, login, fetchauthor, test};

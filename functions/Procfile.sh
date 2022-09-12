@@ -65,12 +65,13 @@ createApp(){
     do 
         id=$i
         
-        # if grep -Fq "name: app1" ~/.config/stream-cli/config.yml
-        #     then
-        #         id=$(expr $i + 1)
-        #     else
-        #         id=$i
-        # fi
+        if grep -Fq "name: app1" ~/.config/stream-cli/config.yml
+            then
+                echo "app1 found increasing count"
+                id=$(expr $i + 1)
+            else
+                id=$i
+        fi
         lastId=$id
         if [ ${BASH_VERSION%%[^0-9]*} -lt 4 ]
             then
@@ -89,9 +90,9 @@ createApp(){
                 # fi
                 echo "id is $id"
                 name="app$id"
-                # id=`jq -r  '.id' ./trial_extender/collected/app$i.json`
+                # id=`jq -r  '.id' ./trial_extender/collected/app$id.json`
                 appkey=`jq -r '.key' ./trial_extender/collected/app$id.json` 
-                appsec=`jq -r '.secret' ./functions/trial_extender/collected/app$id.json`
+                appsec=`jq -r '.secret' ./trial_extender/collected/app$id.json`
         fi
         newApp="- name: $name\\
   access-key: $appkey\\
@@ -109,7 +110,7 @@ createApp(){
     userId=`jq -r '.user_id' ./trial_extender/collected/app$lastId.json`
     echo "adding user with userid: $userId"
     echo `stream-cli chat upsert-user --properties "{\"id\":\"$userId\"}"`
-    channelId="teamChat"
+    channelId="teamchat"
     checkChannel=`stream-cli chat get-channel --id $channelId --type messaging`
     if [ `jq -r '.id' <<< "$checkChannel"` ]; 
         then 

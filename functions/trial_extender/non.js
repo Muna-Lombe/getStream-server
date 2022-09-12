@@ -27,14 +27,26 @@ const logincred = 0;
 //   // stderr: fs.createWriteStream("errStdErr.txt"),
 // });
 
-// let basepath;
-// try{
-//   process.chdir('trial_extender')
-// }catch(err){
-//   console.error(err,"retrying with /server/trial_extender path")
-//   process.chdir('server/trial_extender')
-// }
-const basepath = __dirname;
+// let processpath;
+try{
+  
+  // process.chdir('functions')
+  if(process.cwd().includes("/functions/trial_extender")){
+    process.chdir('../')
+    // throw new Error("path is sub-path of functions, you need to go up one level.")
+  }else{
+    if(!process.cwd().includes("/functions")){
+      throw new Error("path is sub-path of functions, you need to go up one level.")
+    }
+    console.log("path is set correctly")
+  }
+  // process.chdir('./functions')
+}catch(err){
+  console.error(err)
+  process.chdir(process.cwd()+'/functions')
+}
+
+const basepath = process.cwd()//__dirname;
 
 
 /**
@@ -45,7 +57,7 @@ const basepath = __dirname;
  */
 function setEnvValue(key, value) {
   // read file from hdd & split if from a linebreak to a array
-  const ENV_VARS = fs.readFileSync(process.cwd()+"/functions/.env", "utf8").split(os.EOL);
+  const ENV_VARS = fs.readFileSync(process.cwd()+"/.env", "utf8").split(os.EOL);
 
   console.log("EOL out", ENV_VARS);
   // find the env we want based on the key
@@ -64,7 +76,7 @@ function setEnvValue(key, value) {
 
   // console.log('fin env', ENV_VARS)
   // write everything back to the file system
-  fs.writeFileSync(process.cwd()+"/functions/.env", ENV_VARS.join(os.EOL));
+  fs.writeFileSync(process.cwd()+"/.env", ENV_VARS.join(os.EOL));
   console.log("Env updated with", key, value);
 }
 // filesystem handler
@@ -86,7 +98,7 @@ async function fs_do(type, path, file, data, write_new=false, id=0) {
   }
   if (type==="write") {
     if (write_new === true) {
-      return fs.writeFile(`${basepath}/collected/app${id}.json`, data, (err) => {
+      return fs.writeFile(`${basepath}/trial_extender/collected/app${id}.json`, data, (err) => {
         if (err) throw err;
         console.log("file created and/or updated");
       });
@@ -135,28 +147,28 @@ const requester = {
  */
 async function cleanSlate() {
   try {
-    fs.readdirSync(`${basepath}/collected`).map((file)=> fs.unlinkSync(`${basepath}/collected/${file}`, (err)=> {
+    fs.readdirSync(`${basepath}/trial_extender/collected`).map((file)=> fs.unlinkSync(`${basepath}/trial_extender/collected/${file}`, (err)=> {
       console.log("failed to delete, file might not exist", err);
     }));
-    fs.truncateSync(`${basepath}/cleanedResponseHeader.json`, 0, (err)=>{
+    fs.truncateSync(`${basepath}/trial_extender/cleanedResponseHeader.json`, 0, (err)=>{
       console.log("failed to truncate", err);
     });
-    fs.truncateSync(`${basepath}/collectiveStreamData.json`, 0, (err)=>{
+    fs.truncateSync(`${basepath}/trial_extender/collectiveStreamData.json`, 0, (err)=>{
       console.log("failed to truncate", err);
     });
-    fs.truncateSync(`${basepath}/new_app_data.json`, 0, (err)=>{
+    fs.truncateSync(`${basepath}/trial_extender/new_app_data.json`, 0, (err)=>{
       console.log("failed to truncate", err);
     });
-    fs.truncateSync(`${basepath}/streamCred.json`, 0, (err)=>{
+    fs.truncateSync(`${basepath}/trial_extender/streamCred.json`, 0, (err)=>{
       console.log("failed to truncate", err);
     });
-    fs.truncateSync(`${basepath}/streamData.json`, 0, (err)=>{
+    fs.truncateSync(`${basepath}/trial_extender/streamData.json`, 0, (err)=>{
       console.log("failed to truncate", err);
     });
-    fs.truncateSync(`${basepath}/streamData.txt`, 0, (err)=>{
+    fs.truncateSync(`${basepath}/trial_extender/streamData.txt`, 0, (err)=>{
       console.log("failed to truncate", err);
     });
-    // fs.truncateSync(`${basepath}/stringHeaderResponse.txt`,0,(err)=>{
+    // fs.truncateSync(`${basepath}/trial_extender/stringHeaderResponse.txt`,0,(err)=>{
     //   console.log('failed to truncate', err)
     // })
     console.log("cleaned all slates, can proceed for fresh setup");
@@ -170,6 +182,7 @@ async function cleanSlate() {
 
 // singup
 console.log("basepath",basepath);
+console.log("processpath",process.cwd());
 
 /**
  * When called, this function will create a new account with getStream.io using a temporary email api
@@ -199,7 +212,7 @@ async function signup(timeout=1000) {
     // body data type must match "Content-Type" header
 
   };
-  const res = await requester.makeRequest("post-get", url, em_opts);
+  const res = await requester.makeRequest("post_no_data", url, em_opts);
 
   console.log("temp email generated status:", res.status.code);
   if (res.status.code > 299) {
@@ -253,18 +266,18 @@ async function signup(timeout=1000) {
   // if not, create new file
   let checkFile;
   try {
-    checkFile = fs.readFileSync(`${basepath}/streamCred.json`);
+    checkFile = fs.readFileSync(`${basepath}/trial_extender/streamCred.json`);
   } catch (error) {
-    fs.writeFile(`${basepath}/streamCred.json`, JSON.stringify([{"username": "TeamTay", "email": "lombemuna@hotmail.com", "first_name": "", "last_name": ""}]), (err) => {
+    fs.writeFile(`${basepath}/trial_extender/streamCred.json`, JSON.stringify([{"username": "TeamTay", "email": "lombemuna@hotmail.com", "first_name": "", "last_name": ""}]), (err) => {
       if (err) throw err;
       console.log("streamCred file created");
     });
-    checkFile = fs.readFileSync(`${basepath}/streamCred.json`);
+    checkFile = fs.readFileSync(`${basepath}/trial_extender/streamCred.json`);
   }
 
   // save result of signup to files
   console.log("checkfile long?", checkFile.toString().length>2);
-  fs.writeFileSync(`${basepath}/streamCred.json`, JSON.stringify(em_res));
+  fs.writeFileSync(`${basepath}/trial_extender/streamCred.json`, JSON.stringify(em_res));
 
   console.log("fs write out to streamCred in signup complete");
 
@@ -324,7 +337,7 @@ function setCookies(header) {
       return [finalkey, value];
     }));
 
-    fs.writeFileSync(`${basepath}/cleanedResponseHeader.json`, JSON.stringify(finalCookies));
+    fs.writeFileSync(`${basepath}/trial_extender/cleanedResponseHeader.json`, JSON.stringify(finalCookies));
     console.log("fs write out to CleandedRespHedr in LOGIN complete");
   } catch (error) {
     console.log("header typed changed, switching type 2 format...");
@@ -369,7 +382,7 @@ function setCookies(header) {
     }
     console.log("final cookies", finalCookies);
 
-    fs.writeFileSync(`${basepath}/cleanedResponseHeader.json`, JSON.stringify(finalCookies));
+    fs.writeFileSync(`${basepath}/trial_extender/cleanedResponseHeader.json`, JSON.stringify(finalCookies));
     console.log("fs write out to CleandedRespHedr in LOGIN complete");
   }
 }
@@ -392,8 +405,8 @@ async function login(counter = 0) {
   // gets the user credentials from the streamCred.json
   async function fetchUserCred() {
     try {
-      // await JSON.parse(fs.readFileSync(`${basepath}/streamCred.json`).toString())
-      const streamCred = await JSON.parse(fs.readFileSync(`${basepath}/streamCred.json`).toString());
+      // await JSON.parse(fs.readFileSync(`${basepath}/trial_extender/streamCred.json`).toString())
+      const streamCred = await JSON.parse(fs.readFileSync(`${basepath}/trial_extender/streamCred.json`).toString());
 
       const {email, username} = streamCred;
       return {email, username};
@@ -401,7 +414,7 @@ async function login(counter = 0) {
       console.log("fetchUserCred Error:", e);
       logincount += 1;
       await signup();
-      const streamCred = await JSON.parse(fs.readFileSync(`${basepath}/streamCred.json`).toString());
+      const streamCred = await JSON.parse(fs.readFileSync(`${basepath}/trial_extender/streamCred.json`).toString());
 
       const {email, username} = streamCred;
       return {email, username};
@@ -458,7 +471,7 @@ async function login(counter = 0) {
   console.log("login headers", JSON.parse(lr.headers)["set-cookie"]);
   const newCsrf = JSON.parse(lr.headers)["set-cookie"][0].split(";")[0];
   const newSessionid = JSON.parse(lr.headers)["set-cookie"][1].split(";")[0];
-  fs.writeFileSync(`${basepath}/cleanedResponseHeader.json`, JSON.stringify({csrftoken: newCsrf.slice(newCsrf.indexOf("=")+1, newCsrf.length), sessionid: newSessionid.slice(newSessionid.indexOf("=")+1, newSessionid.length)}));
+  fs.writeFileSync(`${basepath}/trial_extender/cleanedResponseHeader.json`, JSON.stringify({csrftoken: newCsrf.slice(newCsrf.indexOf("=")+1, newCsrf.length), sessionid: newSessionid.slice(newSessionid.indexOf("=")+1, newSessionid.length)}));
   return 1;
 
   // LEGACY CODE DO NOT DELETE
@@ -468,10 +481,10 @@ async function login(counter = 0) {
   // save log to file
   // first delete previous file
   // try {
-  //   fs.truncate(`${basepath}/stringHeaderResponse.txt`,0, function(){console.log('String Header truncated')})
+  //   fs.truncate(`${basepath}/trial_extender/stringHeaderResponse.txt`,0, function(){console.log('String Header truncated')})
   // } catch (error) {
   //   console.log('stringHeaderResponse does not exist')
-  //   fs.writeFile(`${basepath}/stringHeaderResponse.txt`,JSON.stringify(lr.headers), (err) => {
+  //   fs.writeFile(`${basepath}/trial_extender/stringHeaderResponse.txt`,JSON.stringify(lr.headers), (err) => {
   //     if (err) throw err;
   //     console.log('string Header Response created');
   //   })
@@ -500,8 +513,8 @@ async function createApp(app_count=0) {
   console.log("creating app...");
 
   // get tokens and user cred
-  const {id, csrftoken, sessionid, user_token} = await JSON.parse(fs.readFileSync(`${basepath}/cleanedResponseHeader.json`).toString()); // JSON.parse(JSON.stringify(fs_do('read',basepath,'cleanedResponseHeader.json')))
-  const {username} = await JSON.parse(fs.readFileSync(`${basepath}/streamCred.json`).toString());
+  const {id, csrftoken, sessionid, user_token} = await JSON.parse(fs.readFileSync(`${basepath}/trial_extender/cleanedResponseHeader.json`).toString()); // JSON.parse(JSON.stringify(fs_do('read',basepath,'cleanedResponseHeader.json')))
+  const {username} = await JSON.parse(fs.readFileSync(`${basepath}/trial_extender/streamCred.json`).toString());
   console.log("creapp", id, csrftoken, sessionid);
 
   // if no tokens or credentials exist, generate them first
@@ -577,7 +590,7 @@ async function createApp(app_count=0) {
   data["setup_code_example"] = 0;
 
   // saves request result to new_app_data.json file
-  fs_do("write", basepath, "new_app_data.json", JSON.stringify(data));
+  fs_do("write", basepath, "/trial_extender/new_app_data.json", JSON.stringify(data));
   const {res} = await getUser(csrftoken, sessionid);
   const apps = await extractUserDetails("appData", res).then((resp)=>resp.apps);
   const appname = Object.keys(apps[Object.keys(apps)[0]][0])[0];
@@ -586,7 +599,7 @@ async function createApp(app_count=0) {
 
   let {appid, key, secret}={};
   try {
-    ({appid, key, secret}=await JSON.parse(fs.readFileSync(`${basepath}/collected/${appname}.json`).toString()));
+    ({appid, key, secret}=await JSON.parse(fs.readFileSync(`${basepath}/trial_extender/collected/${appname}.json`).toString()));
   } catch (err) {
     ({appid, key, secret}= app);
   }
@@ -597,7 +610,7 @@ async function createApp(app_count=0) {
     STREAM_API_KEY: key.toString(),
     STREAM_API_SECRET: secret.toString(),
   };
-  fs_do("write", basepath, "collectiveStreamData.json", JSON.stringify(apps));
+  fs_do("write", basepath, "/trial_extender/collectiveStreamData.json", JSON.stringify(apps));
 
   fs_do("write_to_env", basepath, ".env", stream_env_cred);
   return 0;
@@ -608,7 +621,7 @@ async function createApp(app_count=0) {
  */
 async function getOptions() {
   console.log("fetching options...");
-  const {id, csrftoken, sessionid, user_id, user_token} = fs.readFileSync(`${basepath}/cleanedResponseHeader.json`).toString() ? await JSON.parse(fs.readFileSync(`${basepath}/cleanedResponseHeader.json`).toString()) : {}; // JSON.parse(JSON.stringify(fs_do('read',basepath,'cleanedResponseHeader.json')))
+  const {id, csrftoken, sessionid, user_id, user_token} = fs.readFileSync(`${basepath}/trial_extender/cleanedResponseHeader.json`).toString() ? await JSON.parse(fs.readFileSync(`${basepath}/trial_extender/cleanedResponseHeader.json`).toString()) : {}; // JSON.parse(JSON.stringify(fs_do('read',basepath,'cleanedResponseHeader.json')))
   const baseurl = `https://getstream.io/api/dashboard/organization/${id}/app/`;
   const newCleanedResponseHeaders = {
     id,
@@ -646,7 +659,7 @@ async function getOptions() {
 
   if (gor.status.code === 200) {
     console.log("get options response 200, updating cleanedResponseHeader.json ");
-    fs.writeFileSync(`${basepath}/cleanedResponseHeader.json`, JSON.stringify(newCleanedResponseHeaders));
+    fs.writeFileSync(`${basepath}/trial_extender/cleanedResponseHeader.json`, JSON.stringify(newCleanedResponseHeaders));
   }
   return 0;
 }
@@ -758,23 +771,28 @@ async function genApp(mode="default state", command="continue") {
   }
   console.log("generating app...");
 
-  const {id, csrftoken, sessionid, user_token} = fs.readFileSync(`${basepath}/cleanedResponseHeader.json`).toString() ? await JSON.parse(fs.readFileSync(`${basepath}/cleanedResponseHeader.json`).toString()) : {}; // JSON.parse(JSON.stringify(fs_do('read',basepath,'cleanedResponseHeader.json')))
-  // JSON.parse(fs.readFileSync(`${basepath}/cleanedResponseHeader.json`).toString())
+  const {id, csrftoken, sessionid, user_token} = fs.readFileSync(`${basepath}/trial_extender/cleanedResponseHeader.json`).toString() ? await JSON.parse(fs.readFileSync(`${basepath}/trial_extender/cleanedResponseHeader.json`).toString()) : {}; // JSON.parse(JSON.stringify(fs_do('read',basepath,'cleanedResponseHeader.json')))
+  // JSON.parse(fs.readFileSync(`${basepath}/trial_extender/cleanedResponseHeader.json`).toString())
 
   console.log("no csrf_token: ", (typeof csrftoken) === "undefined");
   if ((typeof id) === "undefined" || (typeof user_token) === "undefined" || (typeof sessionid) === "undefined" || (typeof csrftoken )=== "undefined" || command === "new_cred") {
-    console.log("one of tokens missing or new credentials requested, retrying login..");
+    console.log("one of tokens missing or new credentials requested, ");
     console.log("csrftoken", csrftoken);
     console.log("sessionid", sessionid);
+    console.log("id", id);
+    // console.log("user_token", user_token);
+    console.log("command", command)
     if ((typeof sessionid) === "undefined" || (typeof csrftoken) === "undefined") {
-      setTimeout(async () => {
+      console.log("retrying in 3 seconds..")
+      // setTimeout(async () => {
+        console.log("retrying login..");
         await login(logincount+1);
-        console.log("retrying genApp()");
+        console.log("retrying generate app...");
         await genApp();
-      }, 3000);
+      // }, 3000);
       return 0;
     }
-
+    console.log("attempting refetch of tokens...")
     const {res, gr} = await getUser(csrftoken, sessionid);
     // console.log("generate app req->res:", res)
     console.log("generated app: ", gr.status.ok);
@@ -800,11 +818,11 @@ async function genApp(mode="default state", command="continue") {
                         "appsec:"+appsec.toString()+"\n";
 
 
-    fs_do("write", basepath, "streamData.txt", cookieString);
+    fs_do("write", basepath, "/trial_extender/streamData.txt", cookieString);
 
-    fs_do("write", basepath, "streamData.json", JSON.stringify({org_id, user_id, user_token, appkey, appsec}));
+    fs_do("write", basepath, "/trial_extender/streamData.json", JSON.stringify({org_id, user_id, user_token, appkey, appsec}));
 
-    fs_do("write", basepath, "cleanedResponseHeader.json", JSON.stringify({id: org_id, csrftoken, sessionid, user_id, user_token}));
+    fs_do("write", basepath, "/trial_extender/cleanedResponseHeader.json", JSON.stringify({id: org_id, csrftoken, sessionid, user_id, user_token}));
     console.log("gen app creds", org_id, csrftoken, sessionid, cookieString);
     console.log("fs write out to streamData and cleandedRespHedr in genapp complete");
 
