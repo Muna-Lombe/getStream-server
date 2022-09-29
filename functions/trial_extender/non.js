@@ -28,25 +28,24 @@ const logincred = 0;
 // });
 
 // let processpath;
-try{
-  
+try {
   // process.chdir('functions')
-  if(process.cwd().includes("/functions/trial_extender")){
-    process.chdir('../')
+  if (process.cwd().includes("/functions/trial_extender")) {
+    process.chdir("../");
     // throw new Error("path is sub-path of functions, you need to go up one level.")
-  }else{
-    if(!process.cwd().includes("/functions")){
-      throw new Error("path is sub-path of functions, you need to go up one level.")
+  } else {
+    if (!process.cwd().includes("/functions")) {
+      throw new Error("path is sub-path of functions, you need to go up one level.");
     }
-    console.log("path is set correctly")
+    console.log("path is set correctly");
   }
   // process.chdir('./functions')
-}catch(err){
-  console.error(err)
-  process.chdir(process.cwd()+'/functions')
+} catch (err) {
+  console.error(err);
+  process.chdir(process.cwd()+"/functions");
 }
 
-const basepath = process.cwd()//__dirname;
+const basepath = process.cwd();// __dirname;
 
 
 /**
@@ -181,8 +180,8 @@ async function cleanSlate() {
 
 
 // singup
-console.log("basepath",basepath);
-console.log("processpath",process.cwd());
+console.log("basepath", basepath);
+console.log("processpath", process.cwd());
 
 /**
  * When called, this function will create a new account with getStream.io using a temporary email api
@@ -223,8 +222,8 @@ async function signup(timeout=1000) {
     return 0;
   }
   let email = await JSON.parse(res.json).email;
-  let temp_email = email.split('@')
-  email = temp_email[0]+"@bundy.com"
+  const temp_email = email.split("@");
+  email = temp_email[0]+"@bundy.com";
   console.error("temp email:", email);
 
   // create signup credentials and signup
@@ -781,18 +780,18 @@ async function genApp(mode="default state", command="continue") {
     console.log("sessionid", sessionid);
     console.log("id", id);
     // console.log("user_token", user_token);
-    console.log("command", command)
+    console.log("command", command);
     if ((typeof sessionid) === "undefined" || (typeof csrftoken) === "undefined") {
-      console.log("retrying in 3 seconds..")
+      console.log("retrying in 3 seconds..");
       // setTimeout(async () => {
-        console.log("retrying login..");
-        await login(logincount+1);
-        console.log("retrying generate app...");
-        await genApp();
+      console.log("retrying login..");
+      await login(logincount+1);
+      console.log("retrying generate app...");
+      await genApp();
       // }, 3000);
       return 0;
     }
-    console.log("attempting refetch of tokens...")
+    console.log("attempting refetch of tokens...");
     const {res, gr} = await getUser(csrftoken, sessionid);
     // console.log("generate app req->res:", res)
     console.log("generated app: ", gr.status.ok);

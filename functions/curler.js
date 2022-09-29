@@ -68,18 +68,18 @@ const http_post = (req_data, req_opts, resolve, reject) => {
   const req = https.request(req_opts, (resp) => {
     // catch response error
     if (resp.statusCode < 200 || resp.statusCode > 299) {
-      resp.on('data', (chunk) => {
-            errBuffer.push(chunk.toString());
-          }).on('end', (data)=>{
-            console.error("data", errBuffer.join())
-            headers = JSON.stringify(resp.headers)
-            status = {code: resp.statusCode, message: resp.statusMessage, ok: (resp.statusCode >= 200 && resp.statusCode <= 299)}
-            console.error("msg", resp.statusCode, resp.statusMessage, req_data, req_opts)
-            fs.appendFileSync("./errFile.txt", JSON.stringify({date:new Date().toTimeString(), data:errBuffer.join()}, ()=>{},"\n"));
-            reject(save_result(errBuffer.join(), headers,status));
-            // reject(save_result({name: "App with this name already exists."}, headers, status));
-            throw new Error()
-          })
+      resp.on("data", (chunk) => {
+        errBuffer.push(chunk.toString());
+      }).on("end", (data)=>{
+        console.error("data", errBuffer.join());
+        headers = JSON.stringify(resp.headers);
+        status = {code: resp.statusCode, message: resp.statusMessage, ok: (resp.statusCode >= 200 && resp.statusCode <= 299)};
+        console.error("msg", resp.statusCode, resp.statusMessage, req_data, req_opts);
+        fs.appendFileSync("./errFile.txt", JSON.stringify({date: new Date().toTimeString() + new Date().toDateString(), data: errBuffer.join()}, ()=>{}, "\n"));
+        reject(save_result(errBuffer.join(), headers, status));
+        // reject(save_result({name: "App with this name already exists."}, headers, status));
+        throw new Error();
+      });
       // throw new Error(`"rejected request", ${resp.statusMessage}`);
     }
 
@@ -148,7 +148,6 @@ const url = "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY";
 // //////////////////////////
 // post req
 function https_request(method, dataOrUrl, opts) {
-
   const getPostOrOptionData = async () =>{
     const res = await resolved_request(http_post, req_data=dataOrUrl, opts).then((resp) => resp).catch((err)=> console.error(err));
     const {json, headers, status} = await res;

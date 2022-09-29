@@ -21,7 +21,8 @@ const cors = require("cors");
 
 // Requiring routes
 const authRoutes = require("./routes/auth.js");
-const inviteRoutes = require("./routes/invite.js");
+const userRoutes = require("./routes/user.js");
+
 
 const app = express();
 
@@ -58,6 +59,7 @@ const server = {
 };
 // POST route
 app.use("/auth", authRoutes);
-app.use("/invite", inviteRoutes);
+app.use("/user", userRoutes);
+
 
 exports.app = functions.https.onRequest(app);

@@ -75,6 +75,9 @@ async function startUpdateProcessWith(args) {
   });
 }
 
+// error handling
+
+
 const signup = async (req, res) =>{
   console.log("signing up");
   try {
@@ -101,13 +104,15 @@ const signup = async (req, res) =>{
     // const checkUsers = await client.queryUsers({name: username}).then(resp => resp.users).catch(err=> {return {code: err.code, message:err.message}});
     // console.log("users", checkUsers)
     // if(!checkUsers.users) return res.status(500).json({message: getUsers})
-    const user = await serverClient.user(username).getOrCreate({fullName, username, gender: "binary", occupation: "Xenomorph"});
+    const user = await serverClient.user(userId).getOrCreate({fullName, username, gender: "binary", occupation: "Xenomorph"});
     res.status(200).json({token, fullName, username, userId, hashedPassword, phoneNumber});
   } catch (error) {
     console.log(error);
     console.log("Starting config update...");
     res.status(500).json({message: "Looks like something is wrong on our side, please try again..."});
-    await startUpdateProcessWith("cleanSlate");
+    if (error.name === "ExpiredStreamClientError") {
+      await startUpdateProcessWith("cleanSlate");
+    }
   }
 };
 
@@ -133,13 +138,13 @@ const login = async (req, res) =>{
     // const client = StreamChat.getInstance(api_key, api_secret);
 
     const getUsers = await client.queryUsers({name: username}).then((resp) => resp.users).catch((err)=> {
+      console.log("getuser error", err);
       return {errCode: err.code, message: err.message};
     });
     console.log("get users", getUsers);
     if (getUsers.errCode || getUsers.length < 1) return res.status(400).json({message: "User not found!"});
 
-    const success = await bcrypt.compare(password, getUsers[0].hashedPassword).then((result)=> true).catch((err)=> false);
-
+    const success = await bcrypt.compare(password, getUsers[0].hashedPassword); // .then((result)=> (console.log("password matched", password) && "resolved")).catch((err)=> false);
     const token = serverClient.createUserToken(getUsers[0].id);
 
     if (success) {
@@ -148,13 +153,15 @@ const login = async (req, res) =>{
       //  console.log(permissions);
       res.status(200).json({token, fullName: getUsers[0].fullName, username: username, userId: getUsers[0].id, permissions: permissions || "no-perms", grants: grants});
     } else {
-      console.log("res: ", res);
+      // console.log("res: ", res);
       res.status(400).json({message: "Incorrect Username or Password"});
     }
   } catch (error) {
     console.log("error with stream-client", error);
     res.status(500).json({message: "Looks like something is wrong on our side, please try again..."});
-    await startUpdateProcessWith("cleanSlate");
+    if (error.name === "ExpiredStreamClientError") {
+      await startUpdateProcessWith("cleanSlate");
+    }
     // res.status(500).json({message: error});
     // throw error;
     // res.send('error')
