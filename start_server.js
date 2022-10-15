@@ -4,7 +4,7 @@ const res = require('express/lib/response');
 
 //Requiring routes
 const authRoutes = require('./routes/auth.js')
-const inviteRoutes = require('./routes/invite.js')
+
 
 const app = express();
 
@@ -27,7 +27,7 @@ app.get('/',(req, res) =>{
 
 //POST route
 app.use('/auth', authRoutes);
-app.use('/invite', inviteRoutes)
+
 
 
 const server = {
