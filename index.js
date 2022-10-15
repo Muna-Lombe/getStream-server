@@ -26,7 +26,7 @@ const userRoutes = require("./routes/user.js");
 
 const app = express();
 
-// const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
 // TO MAKE CROSS-ORIGIN REQUESTS
 app.use(cors());
@@ -60,6 +60,10 @@ const server = {
 // POST route
 app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
-
+app.listen(PORT, (err, req, res, next) => {
+      console.log(`Server is running on port ${PORT}`)
+    }).on('error', (err)=>{
+        console.log('got something', err)
+    });
 
 exports.app = functions.https.onRequest(app);
