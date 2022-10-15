@@ -4,7 +4,7 @@
 nonArgs=$1||"no args"
 echo "first arg $nonArgs"
 echo $(expr length "$nonArgs") 
-size=$(expr length "$nonArgs") 
+size=$(expr length "$1") 
 readJson() {  
     UNAMESTR=`uname`
     if [[ "$UNAMESTR" == 'Linux' ]]; then
@@ -27,7 +27,7 @@ name="dev"
 appkey="0"
 appsec="0"
 setDefaultConfig(){
-    echo "setting base"
+    echo "setting default config..."
     truncate -s 0 ~/.config/stream-cli/config.yml
     defApp="apps:
 - name: dev
@@ -36,10 +36,13 @@ setDefaultConfig(){
   chat-url: https://chat.stream-io-api.com
 default: dev"
     # sed -i "`wc -l < ~/.config/stream-cli/config.yml` a$defApp " ~/.config/stream-cli/config.yml
-    echo "$defApp" >> ~/.config/stream-cli/config.yml   
+    echo "$defApp" >> ~/.config/stream-cli/config.yml 
+    echo "default config set!"  
 }
 
 createApp(){
+    echo "creating app..."
+    pwd
     c=$(ls -1q ./trial_extender/collected* | wc -l)
     lastId=0
     if [ $size -gt 1 ]
@@ -52,7 +55,7 @@ createApp(){
         then
             # command node
             echo "no apps found, creating apps"
-            command node trial_extender/non.js $nonArgs
+            command node ./trial_extender/non.js $nonArgs
             c=$(ls -1q ./trial_extender/collected* | wc -l)
             # createApp
     fi
@@ -62,12 +65,13 @@ createApp(){
     do 
         id=$i
         
-        # if grep -Fq "name: app1" ~/.config/stream-cli/config.yml
-        #     then
-        #         id=$(expr $i + 1)
-        #     else
-        #         id=$i
-        # fi
+        if grep -Fq "name: app1" ~/.config/stream-cli/config.yml
+            then
+                echo "app1 found increasing count"
+                id=$(expr $i + 1)
+            else
+                id=$i
+        fi
         lastId=$id
         if [ ${BASH_VERSION%%[^0-9]*} -lt 4 ]
             then
@@ -86,7 +90,7 @@ createApp(){
                 # fi
                 echo "id is $id"
                 name="app$id"
-                # id=`jq -r  '.id' ./trial_extender/collected/app$i.json`
+                # id=`jq -r  '.id' ./trial_extender/collected/app$id.json`
                 appkey=`jq -r '.key' ./trial_extender/collected/app$id.json` 
                 appsec=`jq -r '.secret' ./trial_extender/collected/app$id.json`
         fi
@@ -104,13 +108,25 @@ createApp(){
         # printf '$i\ndefault: %s\n.\nw\n' "$id" | ed -s ~/.config/stream-cli/config.yml
     echo "config file updated, creating channel...";
     userId=`jq -r '.user_id' ./trial_extender/collected/app$lastId.json`
-    echo "userid: $userId"
-    echo `stream-cli chat create-channel --type messaging --id teamChat --user $userId` 
+    echo "adding user with userid: $userId"
+    echo `stream-cli chat upsert-user --properties "{\"id\":\"$userId\"}"`
+    channelId="teamchat"
+    checkChannel=`stream-cli chat get-channel --id $channelId --type messaging`
+    if [ `jq -r '.id' <<< "$checkChannel"` ]; 
+        then 
+            echo "Channel Exists"; 
+        else 
+            echo "No channel found, creating channel..."
+
+            echo `stream-cli chat create-channel --type messaging --id $channelId --user $userId`; 
+    fi
     echo "current channels"
     stream-cli chat list-channels --type messaging
+    echo "app created!"
 }
 
 bootStrapCli(){
+    echo "bootstrapping cli..."
     envCount=$(ls -1q ./.env* | wc -l)
     if [ $envCount -lt 1 ]
     then
@@ -167,6 +183,7 @@ bootStrapCli(){
         fi
         stream-cli config list
     fi
+    echo "bootstarpping complete!"
     return 0
 }
 
