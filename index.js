@@ -13,11 +13,10 @@
 // server.get("/some-data", (request, response) => {
 //   response.send("Hello world");
 // });
-const functions = require("firebase-functions");
+
 
 const express = require("express");
 const cors = require("cors");
-// const functions = require("firebase-functions");
 
 // Requiring routes
 const authRoutes = require("./routes/auth.js");
@@ -66,4 +65,3 @@ app.listen(PORT, (err, req, res, next) => {
         console.log('got something', err)
     });
 
-exports.app = functions.https.onRequest(app);

@@ -33,7 +33,7 @@ async function execUpdate() {
 
     if (stderr) {
       console.error(`stderr: ${stderr}`);
-      return;
+      // return;
     }
     console.log(`stdout:\n${stdout}`);
   });

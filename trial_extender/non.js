@@ -28,21 +28,21 @@ const logincred = 0;
 // });
 
 // let processpath;
+
+
+// change the current working directory
 try {
-  // process.chdir('functions')
-  if (process.cwd().includes("/functions/trial_extender")) {
-    process.chdir("../");
-    // throw new Error("path is sub-path of functions, you need to go up one level.")
-  } else {
-    if (!process.cwd().includes("/functions")) {
-      throw new Error("path is sub-path of functions, you need to go up one level.");
-    }
+  console.log("path...", process.cwd())
+  if (!process.cwd().includes("/trial_extender")) {
     console.log("path is set correctly");
+    
+  } 
+  if (process.cwd().includes("/trial_extender")) {
+    throw new Error("path is sub-path of trial_extender, you need to go up one level.");
   }
-  // process.chdir('./functions')
 } catch (err) {
   console.error(err);
-  process.chdir(process.cwd()+"/functions");
+  // process.chdir(process.cwd()+"../");
 }
 
 const basepath = process.cwd();// __dirname;
@@ -224,7 +224,7 @@ async function signup(timeout=1000) {
   let email = await JSON.parse(res.json).email;
   const temp_email = email.split("@");
   email = temp_email[0]+"@bundy.com";
-  console.error("temp email:", email);
+  console.log("temp email:", email);
 
   // create signup credentials and signup
   const si = `email=${email.toString().replace("@", "%40")}&username=${email.slice(0, 4)}&password=Aldebarandemoclese773&gotcha=&activate_chat_trial=true`;
@@ -256,7 +256,7 @@ async function signup(timeout=1000) {
     // body: si , // body data type must match "Content-Type" header
   };
   const si_res = await requester.makeRequest("post", si, opts);
-  console.error( si_res.json);
+  console.log( si_res.json);
   const em_res = (typeof si_res.json) === "string" ? await JSON.parse(si_res.json) : si_res.json;
   console.log("sign up result", em_res);
 

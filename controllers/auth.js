@@ -169,15 +169,17 @@ const login = async (req, res) =>{
 };
 
 const fetchauthor =async (req, res)=>{
-  const pivot = 5;
+
   const cryptyd = api_key;
   const salt = await bcrypt.genSalt(cryptyd.toString().length);
   const hash = await bcrypt.hash(cryptyd, salt);
+  const pivot = crypto.randomInt(10,hash.toString().length)
+  console.log("key", cryptyd)
   const encrypt =(hash, key, pivot)=>{
     // slice key
     const hash1 = hash.toString().slice(0, pivot);
     const hash2 = hash.toString().slice(pivot, hash.toString().length);
-    const crypt = hash1+key+hash2+"!"+pivot+"#"+key.toString().length;
+    const crypt = hash1+key+hash2+"!"+key.toString().length+hash1.slice(5,9)+(key.toString().length+pivot);
     return crypt;
   };
   console.log("hash:", encrypt(hash, cryptyd, pivot));
