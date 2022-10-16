@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "clean dirs": "node trial_extender/non.js cleanDirs",
     "deploy": "node trial_extender/non.js cleanDirs && gh push origin without_firebase"
   },
   "keywords": [],
