@@ -1,74 +1,67 @@
+/* eslint-disable max-len */
 
-const { fork, exec, execFile, spawn } = require("child_process");
-const fs = require('fs')
+// // Create and Deploy Your First Cloud Functions
+// // https://firebase.google.com/docs/functions/write-firebase-functions
+//
+// exports.helloWorld = functions.https.onRequest((request, response) => {
+//   functions.logger.info("Hello logs!", {structuredData: true});
+//   response.send("Hello from Firebase!");
+// });
 
-
-
-// SET UP TWO SERVERS, ONE INITIAL AND ANOTHER RESTARTED
-// START THE SERVER AS A CHILD PROCESS AND LISTEN FOR ERRORS
-function isFreshInstall(){
-  console.log("is fresh install",!fs.existsSync(__dirname+'/.env'))
-  return !fs.existsSync(__dirname+'/.env')
-}
-
-function restart_server(process){
-  const initArgs = process.spawnargs[1]
-  return fork(initArgs)
-}
-function update_server(processToRestart){
-  console.log('starting update cred with procfile...')
-    const secondary = fork(__dirname+"/run_procfile")
-    secondary.stdio=[0,'pipe','pipe']
-    secondary.on('message', (message)=>{
-      if(message === "ERROR"){
-        console.log("error, what should I do now?")
-        secondary.send("STOP")
-      }
-      if(message === "COMPLETE"){
-        console.log("completed update, can now restart process")
-        secondary.send("STOP")
-      }
-    }).on('disconnect', (msg)=>{
-      console.log('update complete, restarting server', msg)
-      // process = 
-      processToRestart
-    })
-    secondary.send('START')
-}
-
-function log_process(process){
-  console.log("args",process.spawnargs)
-  process.stdio=[0,'pipe','pipe']
-  process.on('message', (message) => {
-    console.log('message', message)
-    if(message === "ExpiredStreamClientError"){
-      console.log("error:", message, ", disconnecting to reset...")
-      process.send('STOP')
-    }
-    if(message === "SERVER STOPPED"){
-      console.log("message:", message, ", waiting to restart...")
-      // process.send('START')
-      // process.kill(process.pid)
-    }
-  })
+// const express = require("express");
+// const server = express();
+// server.get("/some-data", (request, response) => {
+//   response.send("Hello world");
+// });
 
 
-  process.send('START');
-  process.on('disconnect', (err)=>{
-    console.log("server disconnected, starting update process...")
-    update_server(log_process(restart_server(process)))
-  })
-}
-let childProcess = fork(__dirname+"/start_server")
-if(isFreshInstall()){
-  let streamKeys = `STREAM_APP_ID=1160285
-STREAM_API_KEY=8tpzrxya45e2
-STREAM_API_SECRET=2s6db45p654pasyzjk5btwda2ayqqhzyvdvjprepm6q9yvmw6wm4myvj6bxsetwn
-`
-  fs.appendFileSync('./.env',streamKeys)
-  // fs.truncateSync('./.env',0)
-  update_server()
-}
-log_process(childProcess)
+const express = require("express");
+const cors = require("cors");
 
+// Requiring routes
+const authRoutes = require("./routes/auth.js");
+const userRoutes = require("./routes/user.js");
+
+
+const app = express();
+
+const PORT = process.env.PORT || 5000;
+
+// TO MAKE CROSS-ORIGIN REQUESTS
+app.use(cors());
+// TO PASS JSON DATA
+app.use(express.json());
+// TO ENCODE THE URL
+app.use(express.urlencoded({extended: true}));
+
+// Creating routes://
+require("dotenv").config();
+
+// GET route
+app.get("/", (req, res) =>{
+  res.send("Hello, world!");
+});
+
+// eslint-disable-next-line no-unused-vars
+const server = {
+  start: function() {
+    return app.listen((err, req, res, next) => {
+      console.log(`Server is running on port ${process.env.PORT}`);
+    });
+  },
+  stop: function() {
+    app.removeAllListeners();
+    process.send("SERVER STOPPED");
+    process.disconnect();
+    process.exit();
+  },
+};
+// POST route
+app.use("/auth", authRoutes);
+app.use("/user", userRoutes);
+app.listen(PORT, (err, req, res, next) => {
+      console.log(`Server is running on port ${PORT}`)
+    }).on('error', (err)=>{
+        console.log('got something', err)
+    });
 
