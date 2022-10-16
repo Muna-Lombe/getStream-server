@@ -38,8 +38,8 @@ app.use(express.urlencoded({extended: true}));
 require("dotenv").config();
 
 // GET route
-app.get("/", (req, res) =>{
-  res.send("Hello, world!");
+app.get("/health", (req, res) =>{
+  res.status(200).send("Site is online!");
 });
 
 // eslint-disable-next-line no-unused-vars
