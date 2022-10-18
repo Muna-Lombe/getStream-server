@@ -49,8 +49,7 @@ const server = {
   },
 };
 
-// server
-// module.exports= {server}
+
 process.on("message", (message) => {
   if (message == "START") {
     try {

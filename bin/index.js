@@ -60,13 +60,13 @@
 
 
 const { fork } = require("child_process");
-// const isFreshInstall = require("checkEnvExist.js")
-// isFreshInstall
+
 const process = require("node:process");
 const { isFreshInstall } = require("../utils/checkEnvExist");
 // const { server } = require("../utils/start_server");
+
 const basepath = process.cwd();
-// server
+
 // SET UP TWO SERVERS, ONE INITIAL AND ANOTHER RESTARTED
 // START THE SERVER AS A CHILD PROCESS AND LISTEN FOR ERRORS
 
@@ -118,7 +118,6 @@ function update_server(processToRestart){
     processToRestart
   });
 }
-
 function log_process(process){
   console.log("args",process.spawnargs)
   process.stdio=[0,'pipe','pipe']
