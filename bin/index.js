@@ -140,6 +140,7 @@ function log_process(process){
     update_server(log_process(restart_server(process)))
   })
 }
+
 isFreshInstall()
 let serverProcess = fork(basepath+"/utils/start_server")
 log_process(serverProcess)

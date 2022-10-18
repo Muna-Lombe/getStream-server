@@ -1,7 +1,8 @@
+/* eslint-disable no-undef */
 /* eslint-disable max-len */
 const express = require("express");
 const cors = require("cors");
-const process = require("node:process");
+// const process = require("node:process");
 // const basepath = process.cwd();
 
 // Requiring routes
@@ -54,8 +55,8 @@ process.on("message", (message) => {
   if (message == "START") {
     try {
       console.log("Primary process received START message");
-      process.send("server object", server.start());
-      process.send(message);
+      server.start()
+      process.send("server started");
       process.on("unhandledRejection", (err)=>{
         console.log("caught unhandled rejection in primary process", err);
         if (err.name === "ExpiredStreamClientError") {
