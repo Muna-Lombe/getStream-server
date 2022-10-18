@@ -425,6 +425,7 @@ async function login(counter = 0) {
       const {email, username} = streamCred;
       return {email, username};
     }
+    
   }
 
 

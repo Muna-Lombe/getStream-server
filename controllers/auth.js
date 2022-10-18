@@ -172,9 +172,9 @@ const login = async (req, res) =>{
   } catch (error) {
     console.log("error with stream-client", error);
     res.status(500).json({message: "Looks like something is wrong on our side, please try again..."});
-    if (error.name === "ExpiredStreamClientError") {
-      await startUpdateProcessWith("cleanSlate");
-    }
+    // if (error.name === "ExpiredStreamClientError") {
+    //   await startUpdateProcessWith("cleanSlate");
+    // }
     // res.status(500).json({message: error});
     // throw error;
     // res.send('error')

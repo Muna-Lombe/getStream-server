@@ -14,4 +14,5 @@ function isFreshInstall() {
   }
   return false;
 }
-isFreshInstall();
+module.exports = {isFreshInstall}
+// isFreshInstall();
