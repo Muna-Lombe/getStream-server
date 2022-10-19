@@ -1,5 +1,6 @@
+/* eslint-disable no-undef */
 
-const process = require("node:process");
+// const process = require("node:process");
 const fs = require("fs");
 
 function isFreshInstall() {

@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /* eslint-disable no-unreachable */
 // /* eslint-disable max-len */
 
@@ -61,7 +62,7 @@
 
 const { fork } = require("child_process");
 
-const process = require("node:process");
+// const process = require("node:process");
 const { isFreshInstall } = require("../utils/checkEnvExist");
 // const { server } = require("../utils/start_server");
 

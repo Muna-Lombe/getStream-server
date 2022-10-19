@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /* eslint-disable no-prototype-builtins */
 /* eslint-disable require-jsdoc */
 /* eslint-disable valid-typeof */
@@ -10,7 +11,7 @@
 /* eslint-disable valid-jsdoc */
 const fs = require("fs");
 const os = require("os");
-const process = require("node:process")
+// const process = require("node:process")
 
 const {Console, error} = require("console");
 const https_request = require("../curler");

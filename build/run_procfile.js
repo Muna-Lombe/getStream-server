@@ -4,7 +4,7 @@
 /* eslint-disable require-jsdoc */
 /* eslint-disable camelcase */
 const {execFile, exec, execFileSync, execSync} = require("child_process");
-const process = require("node:process");
+// const process = require("node:process");
 const { exit } = require("process");
 // eslint-disable-next-line require-jsdoc
 function grant_rights(pathToFile) {
