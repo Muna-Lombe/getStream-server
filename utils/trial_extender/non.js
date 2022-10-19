@@ -146,10 +146,19 @@ const requester = {
  */
 async function cleanSlate(params) {
   const appendFileIfAbsent = (pathToFile, data) =>{
+    let strData = data ? JSON.stringify(data) : '';
     if(!fs.existsSync(pathToFile)){
-      return fs.appendFileSync(pathToFile, JSON.stringify(data) || '');
+      return fs.appendFileSync(pathToFile, strData);
     }
-    return fs.writeFileSync(pathToFile, JSON.stringify(data) || 0,(err)=>{
+    if(data){
+      return fs.writeFileSync(pathToFile, strData,(err)=>{
+        console.log("failed to truncate", err,  "appending file");
+
+      })
+    }
+    strData = data ? JSON.stringify(data) : 0;
+    console.log
+    return fs.truncateSync(pathToFile, strData,(err)=>{
       console.log("failed to truncate", err,  "appending file");
 
     })
