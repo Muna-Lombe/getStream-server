@@ -14,45 +14,56 @@ const fs = require("fs");
 const bcrypt = require("bcrypt");
 const StreamChat = require("stream-chat").StreamChat;// Always remember to create an instance of streamchat by adding .StreamChat, like has been done.
 const crypto = require("crypto");
-
+const process = require("node:process")
 // credentials
 
 require("dotenv").config();
-function isFreshInstall() {
-  console.log(process.cwd());
-  console.log("is fresh install", !fs.existsSync(process.cwd()+"/.env"));
-  if (!fs.existsSync(process.cwd()+"/.env")) {
-    const streamKeys = "STREAM_APP_ID=1160285\nSTREAM_API_KEY=8tpzrxya45e2\nSTREAM_API_SECRET=2s6db45p654pasyzjk5btwda2ayqqhzyvdvjprepm6q9yvmw6wm4myvj6bxsetwn";
-    fs.appendFileSync("./.env", streamKeys);
-    // fs.truncateSync('./.env',0)
-    return true;
-  }
-  return false;
-}
-isFreshInstall();
-
-const api_key = process.env.STREAM_API_KEY;
-const api_secret = process.env.STREAM_API_SECRET;
-const app_id = process.env.STREAM_APP_ID;
-// const api_key = "8tpzrxya45e2";
-// const api_secret = "2s6db45p654pasyzjk5btwda2ayqqhzyvdvjprepm6q9yvmw6wm4myvj6bxsetwn";
-// const app_id = "1160285";
-
+let api_key = process.env.STREAM_API_KEY;
+let api_secret = process.env.STREAM_API_SECRET;
+let app_id = process.env.STREAM_APP_ID;
+let stamp = process.env.TIMESTAMP;
 
 const client = StreamChat.getInstance(api_key, api_secret);
 
-const clientNotActive = async ()=>{
-  const active = await client.queryUsers({}).then((resp) => resp.users&&false).catch((err)=> {
-    console.log("err:", err.code, err.message);
-    return err.code ===2;
-  });
-  console.log("expired client?", active);
-  return active;
+const updateEnv = ()=> {
+  const {appid, key, secret, timestamp} = fs.existsSync(process.cwd()+"/utils/trial_extender/collected/app1.json") ? 
+                                JSON.parse(fs.readFileSync(process.cwd()+"/utils/trial_extender/collected/app1.json"))
+                                : {appid:1,key:2,secret:3}
+  
+  // if(key.toString() !== process.env.STREAM_API_KEY.toString()){
+    console.log("key match", key, api_key, key === api_key)
+    api_key = process.env.STREAM_API_KEY= key;
+    api_secret = process.env.STREAM_API_SECRET= secret;
+    app_id = process.env.STREAM_APP_ID= appid
+    stamp = process.env.TIMESTAMP= timestamp;
+
+  // }
+  console.log("\n......#######.....\n", appid, key, secret, timestamp,new Date(Number.parseInt(timestamp)),"\n......#######.....\n")
+  console.log("\n......#######.....\n", app_id, api_key, api_secret, stamp,new Date(Number.parseInt(timestamp)),"\n......#######.....\n")
+  console.log("\n......#######.....\n", process.env.STREAM_APP_ID, process.env.STREAM_API_KEY, process.env.STREAM_API_SECRET, process.env.TIMESTAMP,new Date(Number.parseInt(timestamp)),"\n......#######.....\n")
+   if(key.toString() === process.env.STREAM_API_KEY.toString()){
+    return {appid, key, secret}
+   }  
+   return updateEnv()
+}
+const clientActive = async ()=>{
+  // updateEnv();
+  console.log("will connect to client with existing keys", stamp)
+  console.log("key", api_key)
+
+  let d1 = new Date(Number.parseInt(stamp));
+  let d2 = new Date()
+  const getDateDiffInDays = (a,b) => {
+
+    return Math.floor((b - a) / (1000*60*60*24))
+  }
+  // return getDateDiffInDays(d1,d2) >=29 ? {expired: true} : StreamChat.getInstance(api_key, api_secret);
+  return getDateDiffInDays(d1,d2) >=29
 };
 
 
 async function startUpdateProcessWith(args) {
-  const child_process=fork(process.cwd()+"/run_procfile", (args && [args]));
+  const child_process=fork(process.cwd()+"/build/run_procfile.js", (args && [args]));
   console.log("args", child_process.spawnargs);
   child_process.stdio=[0, "pipe", "pipe"];
   child_process.on("message", (message) => {
@@ -81,12 +92,11 @@ async function startUpdateProcessWith(args) {
 const signup = async (req, res) =>{
   console.log("signing up");
   try {
-    const clientExpired = await clientNotActive();
-    if (clientExpired) {
-      console.log("client expr", clientExpired);
+    const client = await clientActive();
+    if (client.expired) {
+      console.log("client expr", client.expired);
       const expiredClient = new Error("Client is expired!");
       expiredClient.name = "ExpiredStreamClientError";
-      //   res.status(500).json({message: expiredClient.name});
       throw expiredClient;
     }
     const {fullName, username, password, phoneNumber} = req.body;
@@ -119,27 +129,25 @@ const signup = async (req, res) =>{
 
 const login = async (req, res) =>{
   try {
-    const clientExpired = await clientNotActive();
-    if (clientExpired) {
-      console.log("client expr", clientExpired);
+    const isActive = await clientActive();
+    if (isActive) {
+      console.log("client expr", isActive);
       const expiredClient = new Error("Client is expired!");
       expiredClient.name = "ExpiredStreamClientError";
-      //   res.status(500).json({message: expiredClient.name});
-      console.log("Starting config update...");
-      // res.status(500).json({message: "Looks like something is wrong on our side, please try again..."});
-      // await startUpdateProcessWith();
+      console.log(api_key, api_secret)
+      // return 0;
       throw expiredClient;
     }
-
+    // const {appid, key, secret}=updateEnv()
     const {username, password} = req.body;
-
+    console.log("logging creds before client init", api_key, api_secret, app_id, "\n--------------------\n")
     const serverClient = connect(api_key, api_secret, app_id);
 
-    // const client = StreamChat.getInstance(api_key, api_secret);
-
+    console.log("post client init", api_key,serverClient.apiKey, client.key, "\n--------------------\n")
+    
     const getUsers = await client.queryUsers({name: username}).then((resp) => resp.users).catch((err)=> {
       console.log("getuser error", err);
-      return {errCode: err.code, message: err.message};
+      return {errCode: err.code || 1, message: err.message};
     });
     console.log("get users", getUsers);
     if (getUsers.errCode || getUsers.length < 1) return res.status(400).json({message: "User not found!"});
@@ -159,17 +167,17 @@ const login = async (req, res) =>{
   } catch (error) {
     console.log("error with stream-client", error);
     res.status(500).json({message: "Looks like something is wrong on our side, please try again..."});
-    if (error.name === "ExpiredStreamClientError") {
-      await startUpdateProcessWith("cleanSlate");
-    }
+    // if (error.name === "ExpiredStreamClientError") {
+    //   await startUpdateProcessWith("cleanSlate");
+    // }
     // res.status(500).json({message: error});
-    // throw error;
+    throw error;
     // res.send('error')
   }
 };
 
 const fetchauthor =async (req, res)=>{
-
+  if (!api_key) return res.status(200).json({hash: "0"})
   const cryptyd = api_key;
   const salt = await bcrypt.genSalt(cryptyd.toString().length);
   const hash = await bcrypt.hash(cryptyd, salt);
