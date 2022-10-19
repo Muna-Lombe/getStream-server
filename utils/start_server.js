@@ -27,7 +27,7 @@ require("dotenv").config();
 
 // GET route
 app.get("/health", (req, res) =>{
-  res.status(200).send("Site is online!");
+  res.status(200).json("Site is online!");
 });
 
 // POST route
