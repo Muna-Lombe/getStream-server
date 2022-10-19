@@ -35,11 +35,9 @@ app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 const server = {
   start: function() {
-    return app.listen(() => {
+    return app.listen(PORT,() => {
       console.log(`Server is running on port ${PORT}`);
-    }).on("error", (err)=>{
-      console.log("got something", err);
-    });
+    })
   },
   stop: async function() {
     app.removeAllListeners();

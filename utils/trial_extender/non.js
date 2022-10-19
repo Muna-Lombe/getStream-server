@@ -144,7 +144,7 @@ const requester = {
  * This is necessary to create a clean slate for a fresh setup
  * @return {boolean}
  */
-async function cleanSlate() {
+async function cleanSlate(params) {
   try {
     // fs.readdirSync(`${basepath}/utils/trial_extender/collected`).map((file)=> fs.unlinkSync(`${basepath}/utils/trial_extender/collected/${file}`, (err)=> {
     //   console.log("failed to delete, file might not exist", err);
@@ -171,11 +171,12 @@ async function cleanSlate() {
       console.log("failed to truncate", err);
     });
     // Remove content of .env file
-    // if(fs.existsSync(`${basepath}/.env`)){
-    //   fs.truncateSync(`${basepath}/.env`,0,(err)=>{
-    //     console.log('failed to truncate', err)
-    //   })
-    // }
+
+    if(params === "and_env" && fs.existsSync(`${basepath}/.env`)){
+      fs.unlinkSync(`${basepath}/.env`, (err)=> {
+      console.log("failed to delete, file might not exist", err);
+    })
+    }
     
     console.log("cleaned all slates, can proceed for fresh setup");
     return true;
@@ -844,10 +845,10 @@ async function genApp(mode="default state", command="continue") {
   return 0;
 }
 
-const args = process.argv.slice(2).length > 0 ? process.argv.slice(2)[0] : null;
+const args = process.argv.slice(2).length > 0 ? process.argv.slice(2) : null;
 
-if (args === "cleanDirs") {
-  return cleanSlate();
+if (args[0] === "cleanDirs") {
+  return cleanSlate(args[1] ? args[1] : '');
 }
 
 genApp(args);

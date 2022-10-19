@@ -8,7 +8,7 @@
     "dev": "nodemon bin/index.js",
     "build": "",
     "lint": "",
-    "clean-install": "node utils/trial_extender/non.js cleanDirs",
+    "clean-install": "node utils/trial_extender/non.js cleanDirs and_env",
     "deploy": "node utils/trial_extender/non.js cleanDirs && gh push origin without_firebase"
   },
   "keywords": [],

@@ -66,15 +66,17 @@ const { isFreshInstall } = require("../utils/checkEnvExist");
 // const { server } = require("../utils/start_server");
 
 const basepath = process.cwd();
-
+const serverPath = basepath+"/utils/start_server";
 // SET UP TWO SERVERS, ONE INITIAL AND ANOTHER RESTARTED
 // START THE SERVER AS A CHILD PROCESS AND LISTEN FOR ERRORS
 
 function restart_server(process){
   const initArgs = process.spawnargs[1]
+  console.log("args to restart server with", initArgs)
   return fork(initArgs)
 }
-function update_server(processToRestart){
+// eslint-disable-next-line no-unused-vars
+function update_server(logProcessFn,restartFn, processToRestart){
   console.log('updating cred with procfile...')
     // const secondary = fork(basepath+"/build/run_procfile.js",)
     // secondary.stdio=[0,'pipe','pipe']
@@ -94,28 +96,21 @@ function update_server(processToRestart){
     // })
     // secondary.send('START')
     ////////////////////////////
-    return 0;
-  const child_process=fork(process.cwd()+"/build/run_procfile.js", (['cleanSlate']));
-  console.log("args", child_process.spawnargs);
-  child_process.stdio=[0, "pipe", "pipe"];
-  child_process.on("message", (message) => {
+    // return 0;
+  const updater_process=fork(process.cwd()+"/build/run_procfile.js", (['cleanSlate']));
+  console.log("args", updater_process.spawnargs);
+  updater_process.stdio=[0, "pipe", "pipe"];
+  updater_process.on("message", (message) => {
     console.log("message", message);
     if ( message === "COMPLETE" ) {
       console.log("return to server process...");
-      child_process.send("STOP");
-    }
-    if (message === "ExpiredStreamClientError") {
-      console.log("error:", message, ", disconnecting to reset...");
-      child_process.send("STOP");
-    }
-    if (message === "SERVER STOPPED") {
-      console.log("message:", message, ", restarting...");
+      updater_process.send("STOP");
     }
   });
-  child_process.send("START");
-  child_process.on("disconnect", ()=> {
-    console.log("child process disconnected");
-    processToRestart
+  updater_process.send("START");
+  updater_process.on("disconnect", ()=> {
+    console.log("updater process disconnected \n restarting server...");
+    return logProcessFn(restartFn(processToRestart))
   });
 }
 function log_process(process){
@@ -128,7 +123,7 @@ function log_process(process){
       process.send('STOP')
     }
     if(message === "SERVER STOPPED"){
-      console.log("message:", message, ", restarting...")
+      console.log("message:", message, ", waiting for update to complete...")
       // process.send('START')
       // process.kill(process.pid)
     }
@@ -137,10 +132,18 @@ function log_process(process){
 
   process.send('START');
   process.on('disconnect', ()=>{
-    update_server(log_process(restart_server(process)))
+    
+    update_server(log_process,restart_server,process)
+    // log_process(update_server(restart_server(process)))
+    // log_process(restart_server(update_server(process)))
+    // restart_server(update_server(log_process(process)))
+
+
+    
+
   })
 }
 
 isFreshInstall()
-let serverProcess = fork(basepath+"/utils/start_server")
+let serverProcess = fork(serverPath)
 log_process(serverProcess)

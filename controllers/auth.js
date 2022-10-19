@@ -17,14 +17,14 @@ const crypto = require("crypto");
 const process = require("node:process")
 // credentials
 
-const dotenv = require("dotenv");
+require("dotenv").config();
+let api_key = process.env.STREAM_API_KEY;
+let api_secret = process.env.STREAM_API_SECRET;
+let app_id = process.env.STREAM_APP_ID;
+let stamp = process.env.TIMESTAMP;
 
-  let api_key = process.env.STREAM_API_KEY;
-  let api_secret = process.env.STREAM_API_SECRET;
-  let app_id = process.env.STREAM_APP_ID;
-  let stamp = process.env.TIMESTAMP;
+const client = StreamChat.getInstance(api_key, api_secret);
 
-// let client;
 const updateEnv = ()=> {
   const {appid, key, secret, timestamp} = fs.existsSync(process.cwd()+"/utils/trial_extender/collected/app1.json") ? 
                                 JSON.parse(fs.readFileSync(process.cwd()+"/utils/trial_extender/collected/app1.json"))
@@ -47,8 +47,7 @@ const updateEnv = ()=> {
    return updateEnv()
 }
 const clientActive = async ()=>{
-  dotenv.config();
-  updateEnv();
+  // updateEnv();
   console.log("will connect to client with existing keys", stamp)
   console.log("key", api_key)
 
@@ -139,15 +138,11 @@ const login = async (req, res) =>{
       // return 0;
       throw expiredClient;
     }
-    const {appid, key, secret}=updateEnv()
+    // const {appid, key, secret}=updateEnv()
     const {username, password} = req.body;
     console.log("logging creds before client init", api_key, api_secret, app_id, "\n--------------------\n")
-    const serverClient = connect(key, secret, appid);
+    const serverClient = connect(api_key, api_secret, app_id);
 
-    const client = StreamChat.getInstance(key, secret);
-    client.key=api_key;
-    client.secret=api_secret;
-    // client.createToken()
     console.log("post client init", api_key,serverClient.apiKey, client.key, "\n--------------------\n")
     
     const getUsers = await client.queryUsers({name: username}).then((resp) => resp.users).catch((err)=> {
@@ -176,7 +171,7 @@ const login = async (req, res) =>{
     //   await startUpdateProcessWith("cleanSlate");
     // }
     // res.status(500).json({message: error});
-    // throw error;
+    throw error;
     // res.send('error')
   }
 };
