@@ -6,17 +6,25 @@
 /.pnp
 .pnp.js
 
+utils/trial_extender/collected/app1.json
+utils/trial_extender/cleanedResponseHeader.json
+utils/trial_extender/collectiveStreamData.json
+utils/trial_extender/new_app_data.json
+utils/trial_extender/streamCred.json
+utils/trial_extender/streamData.json
+utils/trial_extender/streamData.txt
+
 # testing
 /coverage
 
 # production
-/utils/trial_extender/collected/app1.json
-/utils/trial_extender/cleanedResponseHeader.json
-/utils/trial_extender/collectiveStreamData.json
-/utils/trial_extender/new_app_data.json
-/utils/trial_extender/streamCred.json
-/utils/trial_extender/streamData.json
-/utils/trial_extender/streamData.txt
+utils/trial_extender/collected/app1.json
+utils/trial_extender/cleanedResponseHeader.json
+utils/trial_extender/collectiveStreamData.json
+utils/trial_extender/new_app_data.json
+utils/trial_extender/streamCred.json
+utils/trial_extender/streamData.json
+utils/trial_extender/streamData.txt
 # /build
 
 # misc
