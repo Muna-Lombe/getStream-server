@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /* eslint-disable no-prototype-builtins */
 /* eslint-disable require-jsdoc */
 /* eslint-disable valid-typeof */
@@ -14,7 +15,7 @@ const fs = require("fs");
 const bcrypt = require("bcrypt");
 const StreamChat = require("stream-chat").StreamChat;// Always remember to create an instance of streamchat by adding .StreamChat, like has been done.
 const crypto = require("crypto");
-const process = require("node:process")
+// const process = require("node:process")
 // credentials
 
 require("dotenv").config();
@@ -25,27 +26,6 @@ let stamp = process.env.TIMESTAMP;
 
 const client = StreamChat.getInstance(api_key, api_secret);
 
-const updateEnv = ()=> {
-  const {appid, key, secret, timestamp} = fs.existsSync(process.cwd()+"/utils/trial_extender/collected/app1.json") ? 
-                                JSON.parse(fs.readFileSync(process.cwd()+"/utils/trial_extender/collected/app1.json"))
-                                : {appid:1,key:2,secret:3}
-  
-  // if(key.toString() !== process.env.STREAM_API_KEY.toString()){
-    console.log("key match", key, api_key, key === api_key)
-    api_key = process.env.STREAM_API_KEY= key;
-    api_secret = process.env.STREAM_API_SECRET= secret;
-    app_id = process.env.STREAM_APP_ID= appid
-    stamp = process.env.TIMESTAMP= timestamp;
-
-  // }
-  console.log("\n......#######.....\n", appid, key, secret, timestamp,new Date(Number.parseInt(timestamp)),"\n......#######.....\n")
-  console.log("\n......#######.....\n", app_id, api_key, api_secret, stamp,new Date(Number.parseInt(timestamp)),"\n......#######.....\n")
-  console.log("\n......#######.....\n", process.env.STREAM_APP_ID, process.env.STREAM_API_KEY, process.env.STREAM_API_SECRET, process.env.TIMESTAMP,new Date(Number.parseInt(timestamp)),"\n......#######.....\n")
-   if(key.toString() === process.env.STREAM_API_KEY.toString()){
-    return {appid, key, secret}
-   }  
-   return updateEnv()
-}
 const clientActive = async ()=>{
   // updateEnv();
   console.log("will connect to client with existing keys", stamp)
@@ -61,30 +41,6 @@ const clientActive = async ()=>{
   return getDateDiffInDays(d1,d2) >=29
 };
 
-
-async function startUpdateProcessWith(args) {
-  const child_process=fork(process.cwd()+"/build/run_procfile.js", (args && [args]));
-  console.log("args", child_process.spawnargs);
-  child_process.stdio=[0, "pipe", "pipe"];
-  child_process.on("message", (message) => {
-    console.log("message", message);
-    if ( message === "COMPLETE" ) {
-      console.log("return to server process...");
-      child_process.send("STOP");
-    }
-    if (message === "ExpiredStreamClientError") {
-      console.log("error:", message, ", disconnecting to reset...");
-      child_process.send("STOP");
-    }
-    if (message === "SERVER STOPPED") {
-      console.log("message:", message, ", restarting...");
-    }
-  });
-  child_process.send("START");
-  child_process.on("disconnect", (err)=> {
-    console.log("child process disconnected");
-  });
-}
 
 // error handling
 
@@ -111,18 +67,16 @@ const signup = async (req, res) =>{
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const token = serverClient.createUserToken(userId);
-    // const checkUsers = await client.queryUsers({name: username}).then(resp => resp.users).catch(err=> {return {code: err.code, message:err.message}});
-    // console.log("users", checkUsers)
-    // if(!checkUsers.users) return res.status(500).json({message: getUsers})
     const user = await serverClient.user(userId).getOrCreate({fullName, username, gender: "binary", occupation: "Xenomorph"});
     res.status(200).json({token, fullName, username, userId, hashedPassword, phoneNumber});
   } catch (error) {
     console.log(error);
     console.log("Starting config update...");
     res.status(500).json({message: "Looks like something is wrong on our side, please try again..."});
-    if (error.name === "ExpiredStreamClientError") {
-      await startUpdateProcessWith("cleanSlate");
-    }
+    // if (error.name === "ExpiredStreamClientError") {
+    //   // await startUpdateProcessWith("cleanSlate");
+    // }
+    throw error;
   }
 };
 

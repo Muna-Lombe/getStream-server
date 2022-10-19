@@ -19,8 +19,7 @@ const https_request = require("../curler");
 
 // global count for login counter
 let logincount = 0;
-// global cred value
-const logincred = 0;
+
 
 // make a new logger, crude headers saver
 // const headerCapture = new Console({

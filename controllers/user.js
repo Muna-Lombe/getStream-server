@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 
 /* eslint-disable no-prototype-builtins */
 /* eslint-disable require-jsdoc */
@@ -21,9 +22,7 @@ require("dotenv").config();
 const api_key = process.env.STREAM_API_KEY;
 const api_secret = process.env.STREAM_API_SECRET;
 const app_id = process.env.STREAM_APP_ID;
-// const api_key = "8tpzrxya45e2";
-// const api_secret = "2s6db45p654pasyzjk5btwda2ayqqhzyvdvjprepm6q9yvmw6wm4myvj6bxsetwn";
-// const app_id = "1160285";
+
 
 
 const client = StreamChat.getInstance(api_key, api_secret);
