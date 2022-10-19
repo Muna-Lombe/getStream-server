@@ -4,10 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "clean dirs": "node trial_extender/non.js cleanDirs",
-    "deploy": "node trial_extender/non.js cleanDirs && gh push origin without_firebase"
+    "start": "node utils/checkEnvExist.js && node bin/index.js",
+    "dev": "nodemon bin/index.js",
+    "build": "",
+    "lint": "",
+    "clean-install": "node utils/trial_extender/non.js cleanDirs and_env",
+    "deploy": "node utils/trial_extender/non.js cleanDirs && git push origin test_indexjs_as_processe"
   },
   "keywords": [],
   "author": "",
@@ -23,5 +25,8 @@
     "node-fetch": "^2.6.7",
     "nodemon": "^2.0.15",
     "stream-chat": "^5.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.25.0"
   }
 }

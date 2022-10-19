@@ -1,6 +1,0 @@
-id:1148264
-appid:1214768
-user_token:eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoic3F1YXJlLWR1c3QtMiJ9.tlOHw40UbImbgSqT62JXjT9RU_cTqe5duOf1zzyXjbc
-user_id:square-dust-2
-appkey:9qqkqatwbrfq
-appsec:5f6k4bsybkgra3yyfusf8xqk4gw8jm8vdyp7mk9rq2t5katvhhjjhzw4nbvh4e75
