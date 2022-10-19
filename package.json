@@ -9,7 +9,7 @@
     "build": "",
     "lint": "",
     "clean-install": "node utils/trial_extender/non.js cleanDirs and_env",
-    "deploy": "node utils/trial_extender/non.js cleanDirs && gh push origin without_firebase"
+    "deploy": "node utils/trial_extender/non.js cleanDirs && git push origin test_indexjs_as_processe"
   },
   "keywords": [],
   "author": "",
