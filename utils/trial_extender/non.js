@@ -150,25 +150,38 @@ async function cleanSlate(params) {
     //   console.log("failed to delete, file might not exist", err);
     // }));
     fs.writeFileSync(`${basepath}/utils/trial_extender/collected/app1.json`,JSON.stringify({appid:11160285, key:'8tpzrxya45e2', secret:'2s6db45p654pasyzjk5btwda2ayqqhzyvdvjprepm6q9yvmw6wm4myvj6bxsetwn', timestamp:new Date("Jun 12 2022").valueOf().toString()}) , (err)=>{
-      console.log("failed to truncate", err);
+      console.log("failed to truncate", err, "appending file");
+      fs.appendFileSync(`${basepath}/utils/trial_extender/collected/app1.json`, {appid:11160285, key:'8tpzrxya45e2', secret:'2s6db45p654pasyzjk5btwda2ayqqhzyvdvjprepm6q9yvmw6wm4myvj6bxsetwn', timestamp:new Date("Jun 12 2022").valueOf().toString()});
+
     });
     fs.truncateSync(`${basepath}/utils/trial_extender/cleanedResponseHeader.json`, 0, (err)=>{
-      console.log("failed to truncate", err);
+      console.log("failed to truncate", err,  "appending file");
+      fs.appendFileSync(`${basepath}/utils/trial_extender/cleanedResponseHeader.json`, '');
+
     });
     fs.truncateSync(`${basepath}/utils/trial_extender/collectiveStreamData.json`, 0, (err)=>{
-      console.log("failed to truncate", err);
+      console.log("failed to truncate", err,  "appending file");
+      fs.appendFileSync(`${basepath}/utils/trial_extender/collectiveStreamData.json`, '');
     });
     fs.truncateSync(`${basepath}/utils/trial_extender/new_app_data.json`, 0, (err)=>{
-      console.log("failed to truncate", err);
+      console.log("failed to truncate", err,  "appending file");
+      fs.appendFileSync(`${basepath}/utils/trial_extender/new_app_data.json`, '');
+      
     });
     fs.truncateSync(`${basepath}/utils/trial_extender/streamCred.json`, 0, (err)=>{
-      console.log("failed to truncate", err);
+      console.log("failed to truncate", err,  "appending file");
+      fs.appendFileSync(`${basepath}/utils/trial_extender/streamCred.json`, '');
+
     });
     fs.truncateSync(`${basepath}/utils/trial_extender/streamData.json`, 0, (err)=>{
-      console.log("failed to truncate", err);
+      console.log("failed to truncate", err,  "appending file");
+      fs.appendFileSync(`${basepath}/utils/trial_extender/streamData.json`, '');
+
     });
     fs.truncateSync(`${basepath}/utils/trial_extender/streamData.txt`, 0, (err)=>{
-      console.log("failed to truncate", err);
+      console.log("failed to truncate", err,  "appending file");
+      fs.appendFileSync(`${basepath}/utils/trial_extender/streamData.txt`, '');
+
     });
     // Remove content of .env file
 
