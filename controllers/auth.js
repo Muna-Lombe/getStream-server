@@ -45,7 +45,7 @@ const getValidCred = () =>{
   let stamp = process.env.TIMESTAMP;
   let {appid, key, secret, timestamp} = fs.existsSync(`${basepath}/utils/trial_extender/collected/app1.json`) ? 
                                         JSON.parse(fs.readFileSync(`${basepath}/utils/trial_extender/collected/app1.json`))
-                                        : {app_id, api_key, api_secret, timestamp:stamp}
+                                        : {appid:app_id, key:api_key, secret:api_secret, timestamp:stamp}
   let initCred, uptCred;
   initCred = {app_id, api_key, api_secret, timestamp:stamp};
   uptCred = {app_id:appid, api_key:key, api_secret:secret, timestamp};
