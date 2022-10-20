@@ -19,15 +19,11 @@ const crypto = require("crypto");
 // credentials
 
 require("dotenv").config();
-let api_key = process.env.STREAM_API_KEY;
-let api_secret = process.env.STREAM_API_SECRET;
-let app_id = process.env.STREAM_APP_ID;
-let stamp = process.env.TIMESTAMP;
 
-const client = StreamChat.getInstance(api_key, api_secret);
+const basepath = process.cwd();
+
 
 const clientActive = async ()=>{
-  // updateEnv();
   console.log("will connect to client with existing keys", stamp)
   console.log("key", api_key)
 
@@ -41,10 +37,22 @@ const clientActive = async ()=>{
   return getDateDiffInDays(d1,d2) >=29
 };
 
+// check for and return valid cred
+const getValidCred = () =>{
+  let api_key = process.env.STREAM_API_KEY;
+  let api_secret = process.env.STREAM_API_SECRET;
+  let app_id = process.env.STREAM_APP_ID;
+  let stamp = process.env.TIMESTAMP;
+  let {appid, key, secret, timestamp} = JSON.parse(fs.readFileSync(`${basepath}/utils/trial_extender/collected/app1.json`))
+  let initCred, uptCred;
+  initCred = {app_id, api_key, api_secret, timestamp:stamp};
+  uptCred = {app_id:appid, api_key:key, api_secret:secret, timestamp};
+  if(key === api_key) return initCred;
+  return uptCred;
+}
 
+const client = StreamChat.getInstance(getValidCred().api_key, getValidCred().api_secret);
 // error handling
-
-
 const signup = async (req, res) =>{
   console.log("signing up");
   try {
@@ -60,10 +68,12 @@ const signup = async (req, res) =>{
     // random user ID using crypto
     const userId = crypto.randomBytes(16).toString("hex");
 
+    // credentials
+    const {api_key, api_secret, app_id} = getValidCred()
     // connection instance
     const serverClient = connect(api_key, api_secret, app_id);
 
-    // console.log(serverClient)
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const token = serverClient.createUserToken(userId);
@@ -73,9 +83,7 @@ const signup = async (req, res) =>{
     console.log(error);
     console.log("Starting config update...");
     res.status(500).json({message: "Looks like something is wrong on our side, please try again..."});
-    // if (error.name === "ExpiredStreamClientError") {
-    //   // await startUpdateProcessWith("cleanSlate");
-    // }
+  
     throw error;
   }
 };
@@ -92,7 +100,7 @@ const login = async (req, res) =>{
       // return 0;
       throw expiredClient;
     }
-    // const {appid, key, secret}=updateEnv()
+    const {app_id, api_key, api_secret}=getValidCred()
     const {username, password} = req.body;
     console.log("logging creds before client init", api_key, api_secret, app_id, "\n--------------------\n")
     const serverClient = connect(api_key, api_secret, app_id);
@@ -112,21 +120,18 @@ const login = async (req, res) =>{
     if (success) {
       const {permissions} = await client.listPermissions(); // List of Permission objects
       const {grants} = await client.getChannelType("messaging");
-      //  console.log(permissions);
+      
       res.status(200).json({token, fullName: getUsers[0].fullName, username: username, userId: getUsers[0].id, permissions: permissions || "no-perms", grants: grants});
     } else {
-      // console.log("res: ", res);
+      
       res.status(400).json({message: "Incorrect Username or Password"});
     }
   } catch (error) {
     console.log("error with stream-client", error);
     res.status(500).json({message: "Looks like something is wrong on our side, please try again..."});
-    // if (error.name === "ExpiredStreamClientError") {
-    //   await startUpdateProcessWith("cleanSlate");
-    // }
-    // res.status(500).json({message: error});
+    
     throw error;
-    // res.send('error')
+    
   }
 };
 
