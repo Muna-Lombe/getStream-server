@@ -22,21 +22,6 @@ require("dotenv").config();
 
 const basepath = process.cwd();
 
-
-const clientActive = async ()=>{
-  console.log("will connect to client with existing keys", stamp)
-  console.log("key", api_key)
-
-  let d1 = new Date(Number.parseInt(stamp));
-  let d2 = new Date()
-  const getDateDiffInDays = (a,b) => {
-
-    return Math.floor((b - a) / (1000*60*60*24))
-  }
-  // return getDateDiffInDays(d1,d2) >=29 ? {expired: true} : StreamChat.getInstance(api_key, api_secret);
-  return getDateDiffInDays(d1,d2) >=29
-};
-
 // check for and return valid cred
 const getValidCred = () =>{
   let api_key = process.env.STREAM_API_KEY;
@@ -52,6 +37,19 @@ const getValidCred = () =>{
   if(key === api_key) return initCred;
   return uptCred;
 }
+
+const clientActive = async ()=>{
+  let d1 = new Date(Number.parseInt(getValidCred().timestamp));
+  let d2 = new Date()
+  const getDateDiffInDays = (a,b) => {
+
+    return Math.floor((b - a) / (1000*60*60*24))
+  }
+  // return getDateDiffInDays(d1,d2) >=29 ? {expired: true} : StreamChat.getInstance(api_key, api_secret);
+  return getDateDiffInDays(d1,d2) >=29
+};
+
+
 
 const client = StreamChat.getInstance(getValidCred().api_key, getValidCred().api_secret);
 // error handling
