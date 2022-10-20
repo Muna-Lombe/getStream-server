@@ -174,13 +174,26 @@ async function cleanSlate(params) {
   ]
   try {
     let cred = {appid:11160285, key:'8tpzrxya45e2', secret:'2s6db45p654pasyzjk5btwda2ayqqhzyvdvjprepm6q9yvmw6wm4myvj6bxsetwn', timestamp:new Date("Jun 12 2022").valueOf().toString()}
-    paths.forEach(p=> appendFileIfAbsent(p,p.includes('app1.json')?cred:undefined))
+    
+    if(!params){
+      paths.forEach(p=> appendFileIfAbsent(p,p.includes('app1.json')?cred:undefined)) 
+    }
     
     // Remove content of .env file
-    if(params === "and_env" && fs.existsSync(`${basepath}/.env`)){
-      fs.unlinkSync(`${basepath}/.env`, (err)=> {
-      console.log("failed to delete, file might not exist", err);
-    })
+    if(params === "unlink"){
+      paths.forEach(p=> {
+        if(fs.existsSync(p)){
+          fs.unlinkSync(p, (err)=> {
+            console.log("failed to delete, file might not exist", err);
+          })
+        }
+      })
+      if(fs.existsSync(`${basepath}/.env`)){
+        fs.unlinkSync(`${basepath}/.env`, (err)=> {
+          console.log("failed to delete, file might not exist", err);
+        })
+      }
+      
     }
     
     console.log("cleaned all slates, can proceed for fresh setup");
