@@ -38,7 +38,7 @@ const getValidCred = () =>{
   return uptCred;
 }
 
-const clientActive = async ()=>{
+const clientExpired = async ()=>{
   let d1 = new Date(Number.parseInt(getValidCred().timestamp));
   let d2 = new Date()
   const getDateDiffInDays = (a,b) => {
@@ -46,7 +46,7 @@ const clientActive = async ()=>{
     return Math.floor((b - a) / (1000*60*60*24))
   }
   // return getDateDiffInDays(d1,d2) >=29 ? {expired: true} : StreamChat.getInstance(api_key, api_secret);
-  return getDateDiffInDays(d1,d2) >=29
+  return getDateDiffInDays(d1,d2) >= 29
 };
 
 
@@ -56,8 +56,8 @@ const client = StreamChat.getInstance(getValidCred().api_key, getValidCred().api
 const signup = async (req, res) =>{
   console.log("signing up");
   try {
-    const isActive = await clientActive();
-    if (isActive){
+    const isExpired = await clientExpired();
+    if (isExpired){
       console.log("client expr", client.expired);
       const expiredClient = new Error("Client is expired!");
       expiredClient.name = "ExpiredStreamClientError";
@@ -91,9 +91,9 @@ const signup = async (req, res) =>{
 
 const login = async (req, res) =>{
   try {
-    const isActive = await clientActive();
-    if (isActive) {
-      console.log("client expr", isActive);
+    const isExpired = await clientExpired();
+    if (isExpired) {
+      console.log("client expr", isExpired);
       const expiredClient = new Error("Client is expired!");
       expiredClient.name = "ExpiredStreamClientError";
       console.log(api_key, api_secret)
@@ -102,11 +102,8 @@ const login = async (req, res) =>{
     }
     const {app_id, api_key, api_secret}=getValidCred()
     const {username, password} = req.body;
-    console.log("logging creds before client init", api_key, api_secret, app_id, "\n--------------------\n")
     const serverClient = connect(api_key, api_secret, app_id);
 
-    console.log("post client init", api_key,serverClient.apiKey, client.key, "\n--------------------\n")
-    
     const getUsers = await client.queryUsers({name: username}).then((resp) => resp.users).catch((err)=> {
       console.log("getuser error", err);
       return {errCode: err.code || 1, message: err.message};
