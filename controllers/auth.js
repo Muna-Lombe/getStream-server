@@ -138,8 +138,8 @@ const login = async (req, res) =>{
 };
 
 const fetchauthor =async (req, res)=>{
-  if (!api_key) return res.status(200).json({hash: "0"})
-  const cryptyd = api_key;
+  if (!getValidCred().api_key) return res.status(200).json({hash: "0"})
+  const cryptyd = getValidCred().api_key;
   const salt = await bcrypt.genSalt(cryptyd.toString().length);
   const hash = await bcrypt.hash(cryptyd, salt);
   const pivot = crypto.randomInt(10,hash.toString().length)
