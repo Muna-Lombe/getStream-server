@@ -43,7 +43,9 @@ const getValidCred = () =>{
   let api_secret = process.env.STREAM_API_SECRET;
   let app_id = process.env.STREAM_APP_ID;
   let stamp = process.env.TIMESTAMP;
-  let {appid, key, secret, timestamp} = JSON.parse(fs.readFileSync(`${basepath}/utils/trial_extender/collected/app1.json`))
+  let {appid, key, secret, timestamp} = fs.existsSync(`${basepath}/utils/trial_extender/collected/app1.json`) ? 
+                                        JSON.parse(fs.readFileSync(`${basepath}/utils/trial_extender/collected/app1.json`))
+                                        : {app_id, api_key, api_secret, timestamp:stamp}
   let initCred, uptCred;
   initCred = {app_id, api_key, api_secret, timestamp:stamp};
   uptCred = {app_id:appid, api_key:key, api_secret:secret, timestamp};
@@ -56,8 +58,8 @@ const client = StreamChat.getInstance(getValidCred().api_key, getValidCred().api
 const signup = async (req, res) =>{
   console.log("signing up");
   try {
-    const client = await clientActive();
-    if (client.expired) {
+    const isActive = await clientActive();
+    if (isActive){
       console.log("client expr", client.expired);
       const expiredClient = new Error("Client is expired!");
       expiredClient.name = "ExpiredStreamClientError";
