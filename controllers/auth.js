@@ -96,7 +96,7 @@ const login = async (req, res) =>{
       console.log("client expr", isExpired);
       const expiredClient = new Error("Client is expired!");
       expiredClient.name = "ExpiredStreamClientError";
-      console.log(api_key, api_secret)
+      console.log(getValidCred().api_key, getValidCred().api_secret)
       // return 0;
       throw expiredClient;
     }
