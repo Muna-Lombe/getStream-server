@@ -79,26 +79,7 @@ function restart_server(process){
 // eslint-disable-next-line no-unused-vars
 function update_server(logProcessFn,restartFn, processToRestart){
   console.log('updating cred with procfile...')
-    // const secondary = fork(basepath+"/build/run_procfile.js",)
-    // secondary.stdio=[0,'pipe','pipe']
-    // secondary.on('message', (message)=>{
-    //   if(message === "ERROR"){
-    //     console.log("error, what should I do now?")
-    //     secondary.send("STOP")
-    //   }
-    //   if(message === "COMPLETE"){
-    //     console.log("completed update, can now restart process")
-    //     secondary.send("STOP")
-    //   }
-    // }).on('disconnect', (msg)=>{
-    //   console.log('update complete, restarting server', msg)
-    //   // process = 
-    //   processToRestart
-    // })
-    // secondary.send('START')
-    ////////////////////////////
-    // return 0;
-  const updater_process=fork(process.cwd()+"/build/run_procfile.js", (['cleanSlate']));
+  const updater_process=fork(process.cwd()+"/build/run_procfile.js", ['cleanSlate']);
   console.log("args", updater_process.spawnargs);
   updater_process.stdio=[0, "pipe", "pipe"];
   updater_process.on("message", (message) => {

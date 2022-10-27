@@ -175,12 +175,17 @@ async function cleanSlate(params) {
   try {
     let cred = {appid:11160285, key:'8tpzrxya45e2', secret:'2s6db45p654pasyzjk5btwda2ayqqhzyvdvjprepm6q9yvmw6wm4myvj6bxsetwn', timestamp:new Date("Jun 12 2022").valueOf().toString()}
     
-    if(!params){
-      paths.forEach(p=> appendFileIfAbsent(p,p.includes('app1.json')?cred:undefined)) 
+    if(params === 0){
+      console.log("add in new files...")
+      paths.forEach(p=> {
+        if(p.includes('app1.json')) return 0;
+        appendFileIfAbsent(p)
+      }) 
     }
     
     // Remove content of .env file
     if(params === "unlink"){
+      console.log("deleting current files....")
       paths.forEach(p=> {
         if(fs.existsSync(p)){
           fs.unlinkSync(p, (err)=> {
@@ -193,7 +198,6 @@ async function cleanSlate(params) {
           console.log("failed to delete, file might not exist", err);
         })
       }
-      
     }
     
     console.log("cleaned all slates, can proceed for fresh setup");
@@ -794,9 +798,11 @@ async function extractUserDetails(extract, data) {
  * @returns
  */
 async function genApp(mode="default state", command="continue") {
-  if (mode === "cleanSlate") {
-    await cleanSlate();
+  if (typeof mode === 'object' && mode[0].includes("cleanSlate")) {
+    cleanSlate(args[1]||0);
+    if(mode[0].toLocaleLowerCase().includes("only")) return 0;
   }
+  
   console.log("generating app...");
 
   const {id, csrftoken, sessionid, user_token} = fs.readFileSync(`${basepath}/utils/trial_extender/cleanedResponseHeader.json`).toString() ? await JSON.parse(fs.readFileSync(`${basepath}/utils/trial_extender/cleanedResponseHeader.json`).toString()) : {}; // JSON.parse(JSON.stringify(fs_do('read',basepath,'cleanedResponseHeader.json')))
@@ -864,11 +870,5 @@ async function genApp(mode="default state", command="continue") {
 }
 
 const args = process.argv.slice(2).length > 0 ? process.argv.slice(2) : null;
-
-if (args[0] === "cleanDirs") {
-  return cleanSlate(args[1] ? args[1] : '');
-}
-
 genApp(args);
-// cleanSlate()
 
