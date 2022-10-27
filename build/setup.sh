@@ -57,7 +57,7 @@ createApp(){
     if [ $c -lt 1 ]
         then
             # command node
-            echo "no apps found, creating apps"
+            echo "no apps found, creating apps with args $nonArgs"
             command node $basepath/utils/trial_extender/non.js $nonArgs
             c=$(ls -1q $basepath/utils/trial_extender/collected* | wc -l)
             # createApp
